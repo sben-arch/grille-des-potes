@@ -1,4 +1,4 @@
-// Génère dist/index.html : les matchs de foot du jour avec les cotes Betclic (1N2 et Totals multiples).
+// Génère dist/index.html : les matchs de foot à venir avec les cotes Betclic (1N2 et Totals multiples).
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 
 const KEY = process.env.ODDS_API_KEY;
@@ -66,7 +66,8 @@ async function main() {
   const now = new Date();
   const today = parisParts(now).day;
   const from = iso(parisMidnightUTC(today));
-  const to = iso(parisMidnightUTC(addDays(today, 1)));
+  // Élargi à 3 jours pour être sûr d'avoir des matchs à afficher
+  const to = iso(parisMidnightUTC(addDays(today, 3)));
 
   const sports = await api('/v4/sports/');
   const leagues = sports
