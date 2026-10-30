@@ -1,4 +1,4 @@
-// Génère dist/index.html : les matchs de foot du jour (heure de Paris) avec les cotes Betclic.
+// Génère dist/index.html : les matchs de foot du jour (heure de Paris) avec les cotes Betclic (1N2 et Totals / Over-Under).
 // Lancé chaque matin par GitHub Actions. Lit la clé dans la variable d'environnement ODDS_API_KEY.
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 
@@ -84,7 +84,7 @@ async function main() {
     });
   console.log(`${leagues.length} championnats de foot actifs.`);
 
-  // 2. Quels championnats ont des matchs aujourd'hui ? (liste des matchs sans cotes)
+  // 2. Quels championnats ont des matchs aujourd'hui ?
   const withGames = [];
   for (const lg of leagues) {
     try {
@@ -98,7 +98,7 @@ async function main() {
   }
   console.log(`${withGames.length} championnats ont des matchs aujourd'hui.`);
 
-  // 3. Cotes Betclic, championnat par championnat, dans la limite du quota.
+  // 3. Cotes Betclic (1N2 et Totals), championnat par championnat.
   const matches = [];
   const skipped = [];
   let budget = DAILY_BUDGET;
@@ -108,12 +108,15 @@ async function main() {
     if (budget !== null && calls >= budget) { skipped.push(lg.title); continue; }
     try {
       const data = await api(`/v4/sports/${lg.key}/odds/`, {
-        bookmakers: BOOKMAKER, markets: 'h2h', oddsFormat: 'decimal', dateFormat: 'iso',
-        commenceTimeFrom: from, commenceTimeTo: to,
+        bookmakers: BOOKMAKER, 
+        markets: 'h2h,totals', // <-- Récupère à la fois le 1N2 et les marchés Over/Under
+        oddsFormat: 'decimal', 
+        dateFormat: 'iso',
+        commenceTimeFrom: from, 
+        commenceTimeTo: to,
       });
       calls += 1;
       if (budget === null && remaining !== null) {
-        // Répartit les crédits restants sur les jours du mois qui restent.
         const [y, m, d] = today.split('-').map(Number);
         const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
         const daysLeft = daysInMonth - d + 1;
@@ -123,12 +126,36 @@ async function main() {
       const rows = [];
       for (const ev of data) {
         const bk = (ev.bookmakers || []).find((b) => b.key === BOOKMAKER);
-        const mk = bk && (bk.markets || []).find((x) => x.key === 'h2h');
-        if (!mk) continue;
-        const price = (name) => { const o = mk.outcomes.find((x) => x.name === name); return o ? o.price : null; };
-        const o = [price(ev.home_team), price('Draw'), price(ev.away_team)];
+        if (!bk) continue;
+
+        // Marché 1N2 (h2h)
+        const mkH2h = (bk.markets || []).find((x) => x.key === 'h2h');
+        if (!mkH2h) continue;
+        const priceH2h = (name) => { const o = mkH2h.outcomes.find((x) => x.name === name); return o ? o.price : null; };
+        const o = [priceH2h(ev.home_team), priceH2h('Draw'), priceH2h(ev.away_team)];
         if (o.some((x) => x == null)) continue;
-        rows.push({ ts: ev.commence_time, t: parisParts(new Date(ev.commence_time)).hm, c: lg.title, h: ev.home_team, a: ev.away_team, o });
+
+        // Marché Totals (Over / Under, généralement 2.5 buts)
+        const mkTotals = (bk.markets || []).find((x) => x.key === 'totals');
+        let totalsData = null;
+        if (mkTotals) {
+          // On cherche par exemple la ligne à 2.5 buts par défaut
+          const over = mkTotals.outcomes.find((x) => x.name === 'Over' && x.point === 2.5);
+          const under = mkTotals.outcomes.find((x) => x.name === 'Under' && x.point === 2.5);
+          if (over && under) {
+            totalsData = { point: 2.5, over: over.price, under: under.price };
+          }
+        }
+
+        rows.push({ 
+          ts: ev.commence_time, 
+          t: parisParts(new Date(ev.commence_time)).hm, 
+          c: lg.title, 
+          h: ev.home_team, 
+          a: ev.away_team, 
+          o,
+          totals: totalsData // Ajout des cotes Over/Under dans le JSON transmis
+        });
       }
       rows.sort((x, y) => x.ts.localeCompare(y.ts));
       for (const r of rows) { delete r.ts; matches.push(r); }
