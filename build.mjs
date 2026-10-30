@@ -1,4 +1,4 @@
-// Génère dist/index.html : les matchs de foot du jour (heure de Paris) avec les cotes Betclic (1N2 et Totals multiples).
+// Génère dist/index.html : les matchs de foot du jour avec les cotes Betclic (1N2 et Totals multiples).
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 
 const KEY = process.env.ODDS_API_KEY;
@@ -94,7 +94,6 @@ async function main() {
     if (remaining !== null && remaining <= RESERVE) break;
     if (budget !== null && calls >= budget) break;
     try {
-      // On demande h2h (1N2) et totals (pour récupérer toutes les lignes de buts disponibles)
       const data = await api(`/v4/sports/${lg.key}/odds/`, {
         bookmakers: BOOKMAKER, 
         markets: 'h2h,totals', 
@@ -116,12 +115,11 @@ async function main() {
         const o = [priceH2h(ev.home_team), priceH2h('Draw'), priceH2h(ev.away_team)];
         if (o.some((x) => x == null)) continue;
 
-        // Récupération de TOUTES les lignes Over/Under disponibles (1.5, 2.5, 3.5, 4.5, etc.)
         const mkTotals = (bk.markets || []).find((x) => x.key === 'totals');
         const totalsLines = {};
         if (mkTotals && mkTotals.outcomes) {
           mkTotals.outcomes.forEach(outcome => {
-            const point = outcome.point; // ex: 1.5, 2.5, 3.5...
+            const point = outcome.point;
             if (!totalsLines[point]) totalsLines[point] = {};
             if (outcome.name === 'Over') totalsLines[point].over = outcome.price;
             if (outcome.name === 'Under') totalsLines[point].under = outcome.price;
@@ -135,7 +133,7 @@ async function main() {
           h: ev.home_team, 
           a: ev.away_team, 
           o,
-          totals: totalsLines // Objet contenant toutes les lignes de buts (1.5, 2.5, 3.5...)
+          totals: totalsLines
         });
       }
       rows.sort((x, y) => x.ts.localeCompare(y.ts));
