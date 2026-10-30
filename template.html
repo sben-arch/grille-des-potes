@@ -147,20 +147,21 @@ input:focus, textarea:focus { border-color: var(--primary); }
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .list > li {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 16px;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.2s;
 }
 
 .list > li.grp {
   background: transparent;
   border: none;
-  padding: 4px 0;
+  padding: 6px 0 2px;
   font-family: 'Outfit', sans-serif;
   font-size: 12px;
   font-weight: 800;
@@ -169,81 +170,117 @@ input:focus, textarea:focus { border-color: var(--primary); }
   text-transform: uppercase;
 }
 
-.mhead {
+/* En-tête cliquable du match (compact) */
+.match-summary {
+  padding: 12px 16px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  justify-content: space-between;
+  cursor: pointer;
+  background: var(--card);
+  user-select: none;
+}
+.match-summary:hover {
+  background: var(--card-hover);
+}
+
+.match-info-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
 }
 
 .time {
-  font-size: 12px;
-  font-weight: 700;
-  background: #070a12;
-  padding: 4px 8px;
-  border-radius: 6px;
-  color: var(--text-muted);
-}
-
-.comp {
   font-size: 11px;
   font-weight: 700;
-  text-transform: uppercase;
+  background: #070a12;
+  padding: 3px 6px;
+  border-radius: 4px;
   color: var(--text-muted);
 }
 
-.pill {
+.teams-mini {
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.match-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge-pick {
   font-size: 10px;
   font-weight: 800;
-  text-transform: uppercase;
-  padding: 4px 8px;
-  border-radius: 6px;
-  background: #070a12;
-  color: var(--text-muted);
-}
-.pill.open {
   background: rgba(16, 185, 129, 0.2);
   color: #34d399;
+  padding: 3px 8px;
+  border-radius: 6px;
 }
 
-.teams {
+.arrow {
+  font-size: 12px;
+  color: var(--text-muted);
+  transition: transform 0.2s;
+}
+.list > li.open .arrow {
+  transform: rotate(180deg);
+}
+
+/* Contenu détaillé (déplié au clic) */
+.match-details {
+  display: none;
+  padding: 0 16px 16px;
+  border-top: 1px solid var(--border);
+  background: #0d1322;
+}
+.list > li.open .match-details {
+  display: block;
+}
+
+.teams-full {
   font-family: 'Outfit', sans-serif;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 800;
   text-align: center;
-  margin: 12px 0 14px;
+  margin: 12px 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
 }
-.teams span:not(.vs) { flex: 1; }
-.teams span:first-child { text-align: right; }
-.teams span:last-child { text-align: left; }
-.teams .vs {
-  font-size: 10px;
+.teams-full span:not(.vs) { flex: 1; }
+.teams-full span:first-child { text-align: right; }
+.teams-full span:last-child { text-align: left; }
+.teams-full .vs {
+  font-size: 9px;
   color: var(--text-muted);
   background: #070a12;
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
 }
 
+/* Boutons de cotes plus petits et compacts */
 .slips {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  gap: 6px;
   margin-bottom: 8px;
 }
 
 .slip {
   background: #070a12;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px 4px;
+  border-radius: 8px;
+  padding: 8px 4px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -254,12 +291,12 @@ input:focus, textarea:focus { border-color: var(--primary); }
 
 .slip b {
   font-family: 'Outfit', sans-serif;
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 900;
 }
 
 .slip small {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--text-muted);
   max-width: 100%;
   overflow: hidden;
@@ -268,17 +305,17 @@ input:focus, textarea:focus { border-color: var(--primary); }
 }
 
 .slip .odd {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   color: #34d399;
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
 .slip.on {
   background: var(--primary);
   border-color: var(--primary);
   color: var(--primary-text);
-  box-shadow: 0 0 15px var(--primary-glow);
+  box-shadow: 0 0 10px var(--primary-glow);
 }
 .slip.on small, .slip.on .odd {
   color: var(--primary-text);
@@ -291,18 +328,18 @@ input:focus, textarea:focus { border-color: var(--primary); }
   margin-top: 6px;
 }
 .totals-label {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
   color: var(--text-muted);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   text-align: center;
 }
 .totals-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 6px;
+  gap: 6px;
+  margin-bottom: 4px;
 }
 
 .send {
@@ -459,15 +496,6 @@ input:focus, textarea:focus { border-color: var(--primary); }
     if(DAY.date===n.day&&m.t&&m.t<=n.hm)return true;
     return false;
   }
-  function head(m,hideComp){
-    return h('div',{class:'mhead'},
-      h('span',{class:'time',text:m.t||'--:--'}),
-      h('span',{class:'comp',text:hideComp?'':(m.c||'')}),
-      locked(m)?h('span',{class:'pill',text:'Fermé'}):h('span',{class:'pill open',text:'Ouvert'}));
-  }
-  function teams(m){
-    return h('div',{class:'teams'},h('span',{text:m.h}),h('span',{class:'vs',text:'VS'}),h('span',{text:m.a}));
-  }
 
   function message(){
     var lines=['GRILLE '+DAY.date+' | '+(S.name||'').trim()];
@@ -515,7 +543,26 @@ input:focus, textarea:focus { border-color: var(--primary); }
       var lock=locked(m),mine=S.picks[i];
       var labels={'1':m.h,'N':'Nul','2':m.a};
       
-      // Boutons 1N2
+      // Résumé miniature affiché avant l'ouverture
+      var pickBadgeText = mine ? (mine.startsWith('OVER_') ? '+'+mine.split('_')[1] : mine.startsWith('UNDER_') ? '-'+mine.split('_')[1] : mine) : '';
+      var rightSideMini = h('div',{class:'match-right'},
+        pickBadgeText ? h('span',{class:'badge-pick',text:pickBadgeText}) : null,
+        locked(m)?h('span',{class:'pill',text:'Fermé'}):null,
+        h('span',{class:'arrow',text:'▼'})
+      );
+
+      var summaryEl = h('div',{class:'match-summary',onclick:function(e){
+        // Basculer l'ouverture de la carte
+        liEl.classList.toggle('open');
+      }},
+        h('div',{class:'match-info-left'},
+          h('span',{class:'time',text:m.t||'--:--'}),
+          h('span',{class:'teams-mini',text:m.h + ' – ' + m.a})
+        ),
+        rightSideMini
+      );
+
+      // Boutons 1N2 détaillés
       var h2hKeys=['1','N','2'];
       var btns1N2=h2hKeys.map(function(v, idx){
         return h('button',{type:'button',class:'slip'+(mine===v?' on':''),disabled:lock?true:null,
@@ -525,11 +572,10 @@ input:focus, textarea:focus { border-color: var(--primary); }
           }},h('b',{text:v}),h('small',{text:labels[v]}),(m.o&&m.o[idx]!=null)?h('span',{class:'odd',text:Number(m.o[idx]).toFixed(2)}):null);
       });
 
-      // Blocs dynamiques pour chaque ligne de buts (1.5, 2.5, 3.5, 4.5...)
+      // Blocs dynamiques Over/Under détaillés
       var totalsBlock = null;
       if(m.totals && Object.keys(m.totals).length > 0) {
         var totalsRows = [];
-        // On trie les lignes de buts par ordre croissant (ex: 1.5, 2.5, 3.5...)
         var points = Object.keys(m.totals).sort(function(a,b){return Number(a)-Number(b);});
         
         points.forEach(function(pt){
@@ -558,8 +604,16 @@ input:focus, textarea:focus { border-color: var(--primary); }
         );
       }
 
+      var detailsEl = h('div',{class:'match-details'},
+        h('div',{class:'teams-full'},h('span',{text:m.h}),h('span',{class:'vs',text:'VS'}),h('span',{text:m.a})),
+        h('div',{class:'slips'},btns1N2),
+        totalsBlock
+      );
+
       if(m.c!==lastComp){items.push(h('li',{class:'grp',text:m.c||'Autres'}));lastComp=m.c;}
-      items.push(h('li',null,head(m,true),teams(m),h('div',{class:'slips'},btns1N2),totalsBlock));
+      
+      var liEl = h('li',null, summaryEl, detailsEl);
+      items.push(liEl);
     });
     out.push(h('ul',{class:'list'},items));
 
@@ -597,7 +651,7 @@ input:focus, textarea:focus { border-color: var(--primary); }
 
   load();
   if(location.hash==='#grille'||location.hash==='#synthese')S.tab=location.hash.slice(1);
-  $('daylabel').textContent=dayLabel(DAY.date);
+  $('daylabel')->textContent=dayLabel(DAY.date);
   renderTabs();
   renderView();
 })();
