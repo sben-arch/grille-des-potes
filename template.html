@@ -1,5 +1,439 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<title>La Grille des Potes</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;800;900&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0b0f19;
+  --card: #131b2e;
+  --card-hover: #1a2540;
+  --border: #22304f;
+  --text: #ffffff;
+  --text-muted: #94a3b8;
+  --primary: #10b981;
+  --primary-glow: rgba(16, 185, 129, 0.4);
+  --primary-text: #042f1c;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  padding: 24px 16px 100px;
+}
+
+.wrap { max-width: 600px; margin: 0 auto; }
+
+header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.kicker {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.15);
+  padding: 6px 14px;
+  border-radius: 20px;
+  margin-bottom: 10px;
+}
+
+h1 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 36px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  margin: 0 0 4px;
+  color: #fff;
+}
+
+.daylabel {
+  font-size: 15px;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: capitalize;
+  margin: 0;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background: var(--card);
+  padding: 6px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+
+.tab {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  padding: 12px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 14px;
+  text-transform: uppercase;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab[aria-selected="true"] {
+  background: var(--primary);
+  color: var(--primary-text);
+  box-shadow: 0 0 20px var(--primary-glow);
+}
+
+.me {
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 16px;
+  border-radius: 14px;
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+input, textarea {
+  width: 100%;
+  background: #070a12;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 14px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 15px;
+  outline: none;
+}
+input:focus, textarea:focus { border-color: var(--primary); }
+
+.note {
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #93c5fd;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  margin-bottom: 16px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.list > li {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.list > li.grp {
+  background: transparent;
+  border: none;
+  padding: 6px 0 2px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--primary);
+  text-transform: uppercase;
+}
+
+.match-summary {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  background: var(--card);
+  user-select: none;
+}
+.match-summary:hover {
+  background: var(--card-hover);
+}
+
+.match-info-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.time {
+  font-size: 11px;
+  font-weight: 700;
+  background: #070a12;
+  padding: 3px 6px;
+  border-radius: 4px;
+  color: var(--text-muted);
+}
+
+.teams-mini {
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.match-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge-pick {
+  font-size: 10px;
+  font-weight: 800;
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.arrow {
+  font-size: 12px;
+  color: var(--text-muted);
+  transition: transform 0.2s;
+}
+.list > li.open .arrow {
+  transform: rotate(180deg);
+}
+
+.match-details {
+  display: none;
+  padding: 0 16px 16px;
+  border-top: 1px solid var(--border);
+  background: #0d1322;
+}
+.list > li.open .match-details {
+  display: block;
+}
+
+.teams-full {
+  font-family: 'Outfit', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  text-align: center;
+  margin: 12px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.teams-full span:not(.vs) { flex: 1; }
+.teams-full span:first-child { text-align: right; }
+.teams-full span:last-child { text-align: left; }
+.teams-full .vs {
+  font-size: 9px;
+  color: var(--text-muted);
+  background: #070a12;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.slips {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.slip {
+  background: #070a12;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  color: var(--text);
+  transition: all 0.15s;
+}
+
+.slip b {
+  font-family: 'Outfit', sans-serif;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.slip small {
+  font-size: 9px;
+  color: var(--text-muted);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.slip .odd {
+  font-size: 10px;
+  font-weight: 700;
+  color: #34d399;
+  margin-top: 1px;
+}
+
+.slip.on {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-text);
+  box-shadow: 0 0 10px var(--primary-glow);
+}
+.slip.on small, .slip.on .odd {
+  color: var(--primary-text);
+  font-weight: 800;
+}
+
+.totals-section {
+  border-top: 1px dashed var(--border);
+  padding-top: 8px;
+  margin-top: 6px;
+}
+.totals-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  text-align: center;
+}
+.totals-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.send {
+  margin-top: 20px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 16px;
+  border-radius: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.row { display: flex; gap: 8px; }
+
+.btn {
+  flex: 1;
+  min-height: 48px;
+  border-radius: 10px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 13px;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  border: 1px solid var(--border);
+  background: #22304f;
+  color: #fff;
+}
+
+.btn.primary {
+  background: var(--primary);
+  color: var(--primary-text);
+  border-color: var(--primary);
+  box-shadow: 0 4px 15px var(--primary-glow);
+}
+
+.preview {
+  background: #070a12;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+.hint { font-size: 12px; font-weight: 600; color: var(--text-muted); margin: 0; }
+
+.empty {
+  text-align: center;
+  padding: 30px;
+  border: 2px dashed var(--border);
+  border-radius: 14px;
+  color: var(--text-muted);
+}
+.empty h2 { font-family: 'Outfit'; color: #fff; font-size: 18px; margin: 0 0 4px; }
+
+#toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  color: #000;
+  padding: 10px 18px;
+  border-radius: 20px;
+  font-weight: 800;
+  font-size: 13px;
+  z-index: 100;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="kicker">Pronos entre potes</div>
+    <h1>La Grille du Jour</h1>
+    <p class="daylabel" id="daylabel"></p>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" type="button" id="tab-grille" data-tab="grille">Ma Grille</button>
+    <button class="tab" role="tab" type="button" id="tab-synthese" data-tab="synthese">Synthèse (Ahmed)</button>
+  </nav>
+
+  <main id="view"></main>
+  <div id="toast" role="status" hidden></div>
+</div>
+
 <script>
-(function(){
+document.addEventListener("DOMContentLoaded", function(){
   var TZ='Europe/Paris';
   var DAY=__DAY_JSON__;
   var PHONE='__PHONE__';
@@ -36,7 +470,7 @@
 
   var S={tab:'grille',name:'',picks:{},pasted:''};
   var toastTimer=null;
-  function toast(msg){var t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.hidden=true;},4000);}
+  function toast(msg){var t=$('toast');if(t){t.textContent=msg;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.hidden=true;},4000);}}
 
   function load(){
     try{
@@ -86,11 +520,15 @@
     var box=$('send');
     if(!box)return;
     var msg=message();
-    $('preview').textContent=ready()?msg:'Entre ton prénom et coche au moins un pronostic.';
+    var previewEl=$('preview');
+    if(previewEl) previewEl.textContent=ready()?msg:'Entre ton prénom et coche au moins un pronostic.';
     var a=$('wa');
-    a.href='https://wa.me/'+PHONE+'?text='+encodeURIComponent(msg);
-    a.setAttribute('aria-disabled',ready()?'false':'true');
-    $('count').textContent=nbPicks()+' / '+(DAY.matches ? DAY.matches.length : 0)+' pronos sélectionnés';
+    if(a){
+      a.href='https://wa.me/'+PHONE+'?text='+encodeURIComponent(msg);
+      a.setAttribute('aria-disabled',ready()?'false':'true');
+    }
+    var countEl=$('count');
+    if(countEl) countEl.textContent=nbPicks()+' / '+(DAY.matches ? DAY.matches.length : 0)+' pronos sélectionnés';
   }
 
   function grilleView(){
@@ -116,7 +554,7 @@
         pickBadgeText ? h('span',{class:'badge-pick',text:pickBadgeText}) : null,
         locked(m)?h('span',{class:'pill',text:'Fermé'}):null,
         h('span',{class:'arrow',text:'▼'})
-      );
+      ];
 
       var summaryEl = h('div',{class:'match-summary',onclick:function(e){
         liEl.classList.toggle('open');
@@ -128,7 +566,6 @@
         rightSideMini
       );
 
-      // Boutons 1N2 détaillés
       var h2hKeys=['1','N','2'];
       var btns1N2=h2hKeys.map(function(v, idx){
         return h('button',{type:'button',class:'slip'+(mine===v?' on':''),disabled:lock?true:null,
@@ -138,7 +575,6 @@
           }},h('b',{text:v}),h('small',{text:labels[v]}),(m.o&&m.o[idx]!=null)?h('span',{class:'odd',text:Number(m.o[idx]).toFixed(2)}):null);
       });
 
-      // Blocs Over/Under (sécurisé si m.totals est vide ou absent)
       var totalsBlock = null;
       if(m.totals && typeof m.totals === 'object' && Object.keys(m.totals).length > 0) {
         var totalsRows = [];
@@ -203,11 +639,14 @@
 
   function renderView(){
     var v=$('view');
-    v.replaceChildren.apply(v,S.tab==='synthese'?[]:grilleView());
+    if(v) v.replaceChildren.apply(v,S.tab==='synthese'?[]:grilleView());
     updateSend();
   }
   function renderTabs(){
-    ['grille','synthese'].forEach(function(k){$('tab-'+k).setAttribute('aria-selected',S.tab===k?'true':'false');});
+    ['grille','synthese'].forEach(function(k){
+      var tabEl=$('tab-'+k);
+      if(tabEl) tabEl.setAttribute('aria-selected',S.tab===k?'true':'false');
+    });
   }
 
   document.querySelectorAll('.tab').forEach(function(b){
@@ -220,8 +659,11 @@
 
   load();
   if(location.hash==='#grille'||location.hash==='#synthese')S.tab=location.hash.slice(1);
-  $('daylabel').textContent=dayLabel(DAY.date);
+  var dayLabelEl=$('daylabel');
+  if(dayLabelEl) dayLabelEl.textContent=dayLabel(DAY.date);
   renderTabs();
   renderView();
-})();
+});
 </script>
+</body>
+</html>
