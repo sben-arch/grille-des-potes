@@ -66,8 +66,8 @@ async function main() {
   const now = new Date();
   const today = parisParts(now).day;
   const from = iso(parisMidnightUTC(today));
-  // Élargi à 3 jours pour être sûr d'avoir des matchs à afficher
-  const to = iso(parisMidnightUTC(addDays(today, 3)));
+  // Élargi à 7 jours pour capturer tous les matchs de la semaine
+  const to = iso(parisMidnightUTC(addDays(today, 7)));
 
   const sports = await api('/v4/sports/');
   const leagues = sports
@@ -127,9 +127,11 @@ async function main() {
           });
         }
 
+        // On inclut la date dans l'affichage ou le tri si besoin
         rows.push({ 
           ts: ev.commence_time, 
           t: parisParts(new Date(ev.commence_time)).hm, 
+          date: parisParts(new Date(ev.commence_time)).day,
           c: lg.title, 
           h: ev.home_team, 
           a: ev.away_team, 
