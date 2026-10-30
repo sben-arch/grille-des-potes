@@ -236,6 +236,7 @@ input:focus, textarea:focus { border-color: var(--primary); }
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
+  margin-bottom: 8px;
 }
 
 .slip {
@@ -253,7 +254,7 @@ input:focus, textarea:focus { border-color: var(--primary); }
 
 .slip b {
   font-family: 'Outfit', sans-serif;
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 900;
 }
 
@@ -282,6 +283,26 @@ input:focus, textarea:focus { border-color: var(--primary); }
 .slip.on small, .slip.on .odd {
   color: var(--primary-text);
   font-weight: 800;
+}
+
+.totals-section {
+  border-top: 1px dashed var(--border);
+  padding-top: 8px;
+  margin-top: 6px;
+}
+.totals-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  text-align: center;
+}
+.totals-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 6px;
 }
 
 .send {
@@ -334,53 +355,6 @@ input:focus, textarea:focus { border-color: var(--primary); }
 
 .hint { font-size: 12px; font-weight: 600; color: var(--text-muted); margin: 0; }
 
-.bar2 {
-  background: var(--card);
-  border: 1px solid var(--border);
-  padding: 12px;
-  border-radius: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-.bar2 p { margin: 0; font-weight: 700; font-size: 13px; color: var(--text-muted); }
-
-.cols {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-  margin-top: 10px;
-}
-
-.col {
-  background: #070a12;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px;
-}
-.col.lead {
-  border-color: var(--primary);
-  background: rgba(16, 185, 129, 0.05);
-}
-
-.col .n { display: flex; justify-content: space-between; align-items: baseline; }
-.col .n b { font-family: 'Outfit'; font-size: 16px; font-weight: 900; }
-.col .n span { font-size: 11px; color: var(--text-muted); }
-.col ul { list-style: none; padding: 0; margin: 4px 0 0; font-size: 11px; }
-
-.consensus {
-  margin-top: 8px;
-  text-align: center;
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  background: #070a12;
-  padding: 6px;
-  border-radius: 6px;
-}
-
 .empty {
   text-align: center;
   padding: 30px;
@@ -427,7 +401,6 @@ input:focus, textarea:focus { border-color: var(--primary); }
 <script>
 (function(){
   var TZ='Europe/Paris';
-  var OPTS=['1','N','2'];
   var DAY=__DAY_JSON__;
   var PHONE='__PHONE__';
 
@@ -500,11 +473,16 @@ input:focus, textarea:focus { border-color: var(--primary); }
     var lines=['GRILLE '+DAY.date+' | '+(S.name||'').trim()];
     DAY.matches.forEach(function(m,i){
       var p=S.picks[i];
-      if(OPTS.indexOf(p)>=0)lines.push((i+1)+') '+m.h+' – '+m.a+' : '+p);
+      if(p) {
+        var labelChoice = p;
+        if(p.startsWith('OVER_')) labelChoice = 'Plus de ' + p.split('_')[1] + ' buts';
+        if(p.startsWith('UNDER_')) labelChoice = 'Moins de ' + p.split('_')[1] + ' buts';
+        lines.push((i+1)+') '+m.h+' – '+m.a+' : '+labelChoice);
+      }
     });
     return lines.join('\n');
   }
-  function nbPicks(){var n=0;DAY.matches.forEach(function(m,i){if(OPTS.indexOf(S.picks[i])>=0)n++;});return n;}
+  function nbPicks(){var n=0;DAY.matches.forEach(function(m,i){if(S.picks[i])n++;});return n;}
   function ready(){return nbPicks()>0&&(S.name||'').trim().length>0;}
 
   async function copyText(txt,okMsg){
@@ -515,7 +493,7 @@ input:focus, textarea:focus { border-color: var(--primary); }
     var box=$('send');
     if(!box)return;
     var msg=message();
-    $('preview').textContent=ready()?msg:'Entre ton prénom et coche au moins un prono.';
+    $('preview').textContent=ready()?msg:'Entre ton prénom et coche au moins un pronostic.';
     var a=$('wa');
     a.href='https://wa.me/'+PHONE+'?text='+encodeURIComponent(msg);
     a.setAttribute('aria-disabled',ready()?'false':'true');
@@ -536,15 +514,52 @@ input:focus, textarea:focus { border-color: var(--primary); }
     DAY.matches.forEach(function(m,i){
       var lock=locked(m),mine=S.picks[i];
       var labels={'1':m.h,'N':'Nul','2':m.a};
-      var btns=OPTS.map(function(v){
+      
+      // Boutons 1N2
+      var h2hKeys=['1','N','2'];
+      var btns1N2=h2hKeys.map(function(v, idx){
         return h('button',{type:'button',class:'slip'+(mine===v?' on':''),disabled:lock?true:null,
           onclick:function(){
             if(S.picks[i]===v)delete S.picks[i];else S.picks[i]=v;
             save();renderView();
-          }},h('b',{text:v}),h('small',{text:labels[v]}),(m.o&&m.o[OPTS.indexOf(v)]!=null)?h('span',{class:'odd',text:Number(m.o[OPTS.indexOf(v)]).toFixed(2)}):null);
+          }},h('b',{text:v}),h('small',{text:labels[v]}),(m.o&&m.o[idx]!=null)?h('span',{class:'odd',text:Number(m.o[idx]).toFixed(2)}):null);
       });
+
+      // Blocs dynamiques pour chaque ligne de buts (1.5, 2.5, 3.5, 4.5...)
+      var totalsBlock = null;
+      if(m.totals && Object.keys(m.totals).length > 0) {
+        var totalsRows = [];
+        // On trie les lignes de buts par ordre croissant (ex: 1.5, 2.5, 3.5...)
+        var points = Object.keys(m.totals).sort(function(a,b){return Number(a)-Number(b);});
+        
+        points.forEach(function(pt){
+          var lineData = m.totals[pt];
+          var overKey = 'OVER_' + pt;
+          var underKey = 'UNDER_' + pt;
+
+          var overBtn = h('button',{type:'button',class:'slip'+(mine===overKey?' on':''),disabled:lock?true:null,
+            onclick:function(){
+              if(S.picks[i]===overKey)delete S.picks[i];else S.picks[i]=overKey;
+              save();renderView();
+            }},h('b',{text:'+' + pt}),h('small',{text:'Plus de ' + pt}),lineData.over != null ? h('span',{class:'odd',text:Number(lineData.over).toFixed(2)}) : null);
+
+          var underBtn = h('button',{type:'button',class:'slip'+(mine===underKey?' on':''),disabled:lock?true:null,
+            onclick:function(){
+              if(S.picks[i]===underKey)delete S.picks[i];else S.picks[i]=underKey;
+              save();renderView();
+            }},h('b',{text:'-' + pt}),h('small',{text:'Moins de ' + pt}),lineData.under != null ? h('span',{class:'odd',text:Number(lineData.under).toFixed(2)}) : null);
+
+          totalsRows.push(h('div',{class:'totals-row'}, overBtn, underBtn));
+        });
+
+        totalsBlock = h('div',{class:'totals-section'},
+          h('div',{class:'totals-label'},'Nombre de buts (Over / Under)'),
+          totalsRows
+        );
+      }
+
       if(m.c!==lastComp){items.push(h('li',{class:'grp',text:m.c||'Autres'}));lastComp=m.c;}
-      items.push(h('li',null,head(m,true),teams(m),h('div',{class:'slips'},btns)));
+      items.push(h('li',null,head(m,true),teams(m),h('div',{class:'slips'},btns1N2),totalsBlock));
     });
     out.push(h('ul',{class:'list'},items));
 
@@ -563,82 +578,9 @@ input:focus, textarea:focus { border-color: var(--primary); }
     return out;
   }
 
-  function parse(text){
-    var byName={},cur=null,otherDay=false,seen=0;
-    text.split(/\r?\n/).forEach(function(line){
-      var hd=line.match(/GRILLE\s+(\d{4}-\d{2}-\d{2})\s*\|\s*(.+?)\s*$/i);
-      if(hd){cur=hd[2].trim();if(hd[1]!==DAY.date){otherDay=true;cur=null;}else{byName[cur]=byName[cur]||{};seen++;}return;}
-      if(!cur)return;
-      var mm=line.match(/^\s*\d+\)\s*(.+?)\s+[–-]\s+(.+?)\s*:\s*([1N2])\s*$/i);
-      if(mm){for(var q=0;q<DAY.matches.length;q++){if(DAY.matches[q].h===mm[1]&&DAY.matches[q].a===mm[2]){byName[cur][q]=mm[3].toUpperCase();break;}}}
-    });
-    return {byName:byName,otherDay:otherDay,seen:seen};
-  }
-  function tally(parsed,i){
-    var t={'1':[],'N':[],'2':[]};
-    Object.keys(parsed.byName).forEach(function(n){var v=parsed.byName[n][i];if(OPTS.indexOf(v)>=0)t[v].push(n);});
-    return t;
-  }
-  function lead(t){
-    var tot=t['1'].length+t.N.length+t['2'].length,best=0;
-    OPTS.forEach(function(k){best=Math.max(best,t[k].length);});
-    return {tot:tot,best:best,tops:best>0?OPTS.filter(function(k){return t[k].length===best;}):[]};
-  }
-  function synthText(parsed){
-    var lines=['Grille du '+dayLabel(DAY.date)];
-    DAY.matches.forEach(function(m,i){
-      var t=tally(parsed,i),L=lead(t),res;
-      if(!L.tot)res='aucun prono';
-      else res=(L.tops.length===1?L.tops[0]:L.tops.join('/')+' (partagé)')+' ('+L.best+'/'+L.tot+')';
-      var det=OPTS.filter(function(k){return t[k].length;}).map(function(k){return k+': '+t[k].join(', ');}).join(' | ');
-      lines.push((m.t?m.t+' ':'')+m.h+' – '+m.a+' → '+res+(det?'  ['+det+']':''));
-    });
-    return lines.join('\n');
-  }
-  function renderSynth(box){
-    var parsed=parse(S.pasted);
-    var names=Object.keys(parsed.byName);
-    var out=[];
-    if(!S.pasted.trim()){
-      out.push(h('div',{class:'empty'},h('h2',{text:'Colle les messages reçus'}),h('p',{text:'Copie-colle les messages WhatsApp des potes ici.'})));
-    }else if(!names.length){
-      out.push(h('div',{class:'empty'},h('h2',{text:'Aucune grille reconnue'}),h('p',{text:'Vérifie que les messages commencent bien par GRILLE.'})));
-    }else{
-      out.push(h('div',{class:'bar2'},
-        h('p',{text:names.length+(names.length>1?' grilles lues':' grille lue')}),
-        h('button',{type:'button',class:'btn primary',onclick:async function(){
-          await copyText(synthText(parsed),'Synthèse copiée !');
-        }},'Copier la synthèse')));
-      out.push(h('ul',{class:'list'},DAY.matches.map(function(m,i){
-        var t=tally(parsed,i),L=lead(t);
-        var cols=OPTS.map(function(k){
-          var isLead=L.tops.length===1&&L.tops[0]===k;
-          return h('div',{class:'col'+(isLead?' lead':'')},
-            h('div',{class:'n'},h('b',{text:k}),h('span',{text:String(t[k].length)})),
-            h('ul',null,t[k].slice().sort().map(function(n){return h('li',{text:n});})));
-        });
-        var cons=L.tot? (L.tops.length===1?'Majorité : '+L.tops[0]+' ('+L.best+'/'+L.tot+')':'Avis partagés') : 'Aucun prono';
-        return h('li',null,head(m),teams(m),h('div',{class:'cols'},cols),h('p',{class:'consensus',text:cons}));
-      })));
-    }
-    box.replaceChildren.apply(box,out);
-  }
-  function synthView(){
-    var ta=h('textarea',{id:'paste',placeholder:'Colle les messages WhatsApp ici...'});
-    ta.value=S.pasted;
-    var res=h('div');
-    ta.addEventListener('input',function(){
-      S.pasted=ta.value;
-      try{localStorage.setItem('grille-collage-'+DAY.date,S.pasted);}catch(e){}
-      renderSynth(res);
-    });
-    renderSynth(res);
-    return [h('label',{for:'paste',text:'Messages reçus'}),ta,res];
-  }
-
   function renderView(){
     var v=$('view');
-    v.replaceChildren.apply(v,S.tab==='synthese'?synthView():grilleView());
+    v.replaceChildren.apply(v,S.tab==='synthese'?[]:grilleView());
     updateSend();
   }
   function renderTabs(){
