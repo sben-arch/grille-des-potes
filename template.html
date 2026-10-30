@@ -1,155 +1,475 @@
-<title>Grille des potes</title>
-<meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500&display=swap">
-<style>
-/* Layout: one narrow column that reads like a betting slip: title, two tabs, one ruled list of matches with 1 / N / 2 stamps. */
-:root{
-  --bg:#F1F4F0;
-  --surface:#FFFFFF;Voici une version entièrement revisitée de votre **`template.html`**.
-
-### Ce qui a changé dans ce nouveau design :
-
-* **Style "Application de paris moderne" (Mode sombre / clair automatique) :** Un look soigné inspiré des meilleures plateformes de pronostics, avec des aplats de couleurs plus contrastés, un mode sombre ultra-propre et une typographie dynamique.
-* **Cartes de matchs aérées :** Les blocs de matchs ont été redessinés avec une hiérarchie visuelle beaucoup plus nette pour les heures, les championnats et les équipes.
-* **Boutons de pronostics style "Grille" (1, N, 2) :** Des cases plus grandes, tactiles et ergonomiques, avec affichage élégant des cotes Betclic en dessous pour un meilleur confort de jeu.
-* **Expérience utilisateur fluide :** Des animations subtiles au survol, des indicateurs d'état (Ouvert / Fermé) plus visibles et un design globalement beaucoup moins "brut" et plus immersif.
-
-Voici le code complet et corrigé à remplacer dans votre fichier `template.html` :
-
-```html
-<title>Grille des potes</title>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>La Grille des Potes</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Outfit:wght@600;700;800&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{
-  --bg:#f4f7f6;
-  --surface:#ffffff;
-  --surface-hover:#fafcfb;
-  --ink:#101815;
-  --muted:#64746b;
-  --line:#e2e8e4;
-  --accent:#059669;
-  --accent-hover:#047857;
-  --accent-ink:#ffffff;
-  --tint:#ecfdf5;
-  --win:#10b981;
-  --f-disp:'Outfit',system-ui,sans-serif;
-  --f-body:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;
-  --f-mono:'JetBrains Mono',ui-monospace,monospace;
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  --radius: 12px;
+:root {
+  --bg: #030712;
+  --card: #0b0f19;
+  --card-hover: #111827;
+  --border: #1f293d;
+  --text: #f9fafb;
+  --text-muted: #9ca3af;
+  --primary: #f59e0b;
+  --primary-glow: rgba(245, 158, 11, 0.25);
+  --primary-text: #030712;
+  --accent-1: #3b82f6;
+  --accent-n: #8b5cf6;
+  --accent-2: #ec4899;
+  --radius: 16px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
 }
-@media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
-    --bg:#090d0b; --surface:#121b17; --surface-hover:#18241f; --ink:#f0fdf4; --muted:#8a9e94; --line:#23352c;
-    --accent:#10b981; --accent-hover:#059669; --accent-ink:#062217; --tint:#0f291e; --win:#34d399;
-    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
-    color-scheme:dark;
-  }
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background-color: var(--bg);
+  color: var(--text);
+  padding: 24px 16px 100px;
+  background-image: 
+    radial-gradient(circle at 10% 10%, rgba(59, 130, 246, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 90% 90%, rgba(245, 158, 11, 0.06) 0%, transparent 40%);
+  min-height: 100vh;
 }
-:root[data-theme="dark"]{
-  --bg:#090d0b; --surface:#121b17; --surface-hover:#18241f; --ink:#f0fdf4; --muted:#8a9e94; --line:#23352c;
-  --accent:#10b981; --accent-hover:#059669; --accent-ink:#062217; --tint:#0f291e; --win:#34d399;
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
-  color-scheme:dark;
+
+.wrap { max-width: 640px; margin: 0 auto; }
+
+header {
+  text-align: center;
+  margin-bottom: 28px;
 }
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 var(--f-body);
-  padding:24px 16px 80px;
-  padding-left:max(16px,env(safe-area-inset-left,0px));
-  padding-right:max(16px,env(safe-area-inset-right,0px))}
-.wrap{max-width:680px;margin:0 auto}
 
-header{margin-bottom:24px;text-align:center}
-.kicker{font:600 11px/1.2 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin:0 0 8px;background:var(--tint);display:inline-block;padding:4px 10px;border-radius:20px}
-h1{font:800 clamp(32px,7vw,42px)/1.1 var(--f-disp);text-transform:uppercase;letter-spacing:-0.02em;margin:0 0 6px}
-.daylabel{font:600 18px/1.2 var(--f-disp);color:var(--muted);text-transform:capitalize;margin:0}
+.kicker {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--primary);
+  background: rgba(245, 158, 11, 0.1);
+  padding: 6px 14px;
+  border-radius: 30px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
 
-button,input,textarea{font:inherit;color:var(--ink)}
-.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:10px 20px;border:1px solid var(--line);background:var(--surface);border-radius:var(--radius);cursor:pointer;text-decoration:none;font-weight:600;box-shadow:var(--shadow)}
-.btn:hover{background:var(--surface-hover);border-color:var(--muted)}
-.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-.btn.primary:hover{background:var(--accent-hover)}
-.btn[aria-disabled="true"]{opacity:.4;cursor:default;box-shadow:none}
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1 {
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(32px, 8vw, 44px);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.03em;
+  margin: 0 0 6px;
+  background: linear-gradient(135deg, #fff 30%, #9ca3af 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
 
-input{min-height:48px;padding:10px 14px;border:1px solid var(--line);background:var(--surface);border-radius:var(--radius);width:100%;box-shadow:var(--shadow)}
-label{display:block;font:600 12px/1.2 var(--f-mono);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.daylabel {
+  font-size: 16px;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: capitalize;
+  margin: 0;
+}
 
-.tabs{display:grid;grid-template-columns:repeat(2,1fr);margin:0 0 20px;background:var(--surface);padding:4px;border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow)}
-.tab{appearance:none;background:none;border:0;padding:12px;border-radius:8px;
-  font:700 15px/1 var(--f-disp);text-transform:uppercase;letter-spacing:.02em;color:var(--muted);cursor:pointer;transition:all .2s}
-.tab[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background: var(--card);
+  padding: 6px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  margin-bottom: 24px;
+}
 
-.note{background:var(--tint);border:1px solid var(--line);border-radius:var(--radius);padding:12px 16px;font-size:14px;margin-bottom:16px;text-align:center;font-weight:500}
-.me{margin-bottom:20px;background:var(--surface);padding:16px;border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow)}
-.empty{border:2px dashed var(--line);border-radius:var(--radius);padding:36px 20px;text-align:center;color:var(--muted);background:var(--surface)}
-.empty h2{font:700 22px/1.2 var(--f-disp);text-transform:uppercase;color:var(--ink);margin:0 0 6px}
-.empty p{margin:0 auto;max-width:40ch;font-size:15px}
+.tab {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  padding: 12px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
 
-.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
-.list>li{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
-.list>li.grp{background:transparent;border:0;padding:8px 4px 0;font:700 12px/1.2 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);box-shadow:none}
+.tab[aria-selected="true"] {
+  background: var(--primary);
+  color: var(--primary-text);
+  box-shadow: 0 0 20px var(--primary-glow);
+}
 
-.mhead{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-bottom:8px}
-.time{font:600 13px/1 var(--f-mono);background:var(--bg);padding:4px 8px;border-radius:6px;border:1px solid var(--line)}
-.comp{flex:1;min-width:0;font:700 11px/1.2 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pill{font:600 10px/1 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);border-radius:6px;padding:4px 8px;color:var(--muted)}
-.pill.open{background:var(--tint);border-color:transparent;color:var(--accent)}
+.me {
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 16px;
+  border-radius: var(--radius);
+  margin-bottom: 20px;
+}
 
-.teams{display:flex;align-items:center;justify-content:center;gap:12px;font:700 20px/1.2 var(--f-disp);margin:12px 0 16px;text-align:center;overflow-wrap:anywhere}
-.teams span:not(.vs){flex:1}
-.teams span:first-child{text-align:right}
-.teams span:last-child{text-align:left}
-.teams .vs{color:var(--muted);font-size:14px;font-weight:500;background:var(--bg);width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0}
+label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
 
-.slips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.slip{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0;padding:10px 6px;
-  border:1px solid var(--line);background:var(--bg);border-radius:10px;cursor:pointer;transition:all .15s}
-.slip b{font:800 22px/1 var(--f-disp)}
-.slip small{font-size:11px;line-height:1.2;color:var(--muted);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.slip:hover:not(:disabled){border-color:var(--accent);background:var(--surface-hover)}
-.slip:disabled{cursor:default;opacity:.4}
-.slip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);box-shadow: 0 2px 4px rgba(5, 150, 105, 0.3)}
-.slip.on small{color:inherit;opacity:.9}
+input, textarea {
+  width: 100%;
+  background: #030712;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s;
+}
 
-.slip .odd{font:600 11px/1 var(--f-mono);margin-top:2px;color:inherit;opacity:.8}
+input:focus, textarea:focus {
+  border-color: var(--primary);
+}
 
-.send{margin-top:20px;background:var(--surface);padding:16px;border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow);display:grid;gap:12px}
-.send .row{display:flex;flex-wrap:wrap;gap:8px}
-.send .row .btn{flex:1 1 180px}
-.preview{margin:0;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);font:13px/1.5 var(--f-mono);white-space:pre-wrap;overflow-wrap:anywhere}
-.hint{margin:0;font-size:13px;color:var(--muted);font-weight:500}
+.note {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  margin-bottom: 16px;
+  text-align: center;
+  font-weight: 500;
+}
 
-textarea{width:100%;min-height:140px;padding:12px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);font:13px/1.5 var(--f-mono);resize:vertical;box-shadow:var(--shadow)}
-.bar2{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;margin:16px 0 12px;background:var(--surface);padding:12px 16px;border-radius:var(--radius);border:1px solid var(--line)}
-.bar2 p{margin:0;font:600 13px/1.3 var(--f-mono);color:var(--muted)}
-.cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
-.col{border:1px solid var(--line);border-radius:10px;padding:10px;min-width:0;background:var(--bg)}
-.col.lead{border-color:var(--accent);background:var(--tint)}
-.col .n{display:flex;align-items:baseline;justify-content:space-between;gap:4px}
-.col .n b{font:800 20px/1 var(--f-disp)}
-.col .n span{font:600 12px/1 var(--f-mono);color:var(--muted)}
-.col ul{list-style:none;margin:8px 0 0;padding:0;font-size:13px;line-height:1.4;overflow-wrap:anywhere}
-.consensus{margin:12px 0 0;font:600 12px/1.3 var(--f-mono);color:var(--muted);text-align:center;background:var(--bg);padding:6px;border-radius:6px}
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
 
-#toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));
-  max-width:420px;margin:0 auto;background:var(--ink);color:var(--bg);border-radius:var(--radius);padding:12px 18px;font-size:14px;font-weight:600;z-index:20;box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3)}
+.list > li {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  transition: transform 0.2s;
+}
 
-@media (max-width:480px){
-  .teams{font-size:17px}
-  .slip b{font-size:19px}
+.list > li.grp {
+  background: transparent;
+  border: none;
+  padding: 6px 0 0;
+  font-family: 'Outfit', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--primary);
+  text-transform: uppercase;
+}
+
+.mhead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.time {
+  font-size: 12px;
+  font-weight: 700;
+  background: #1f293d;
+  padding: 4px 10px;
+  border-radius: 6px;
+  color: var(--text);
+}
+
+.comp {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.pill {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: #1f293d;
+  color: var(--text-muted);
+}
+.pill.open {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+
+.teams {
+  font-family: 'Outfit', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+  margin: 12px 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.teams span:not(.vs) { flex: 1; }
+.teams span:first-child { text-align: right; }
+.teams span:last-child { text-align: left; }
+.teams .vs {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: #1f293d;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.slips {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.slip {
+  background: #030712;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text);
+}
+
+.slip b {
+  font-family: 'Outfit', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.slip small {
+  font-size: 10px;
+  color: var(--text-muted);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.slip .odd {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.slip:hover:not(:disabled) {
+  border-color: var(--primary);
+  background: var(--card-hover);
+}
+
+.slip.on {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-text);
+  box-shadow: 0 0 15px var(--primary-glow);
+}
+.slip.on small, .slip.on .odd {
+  color: var(--primary-text);
+  opacity: 0.8;
+}
+
+.slip:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.send {
+  margin-top: 24px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 20px;
+  border-radius: var(--radius);
+  display: grid;
+  gap: 14px;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  flex: 1;
+  min-height: 50px;
+  border-radius: 12px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  border: 1px solid var(--border);
+  background: #1f293d;
+  color: var(--text);
+  transition: all 0.2s;
+}
+
+.btn.primary {
+  background: var(--primary);
+  color: var(--primary-text);
+  border-color: var(--primary);
+  box-shadow: 0 4px 20px var(--primary-glow);
+}
+
+.btn.primary:hover {
+  transform: translateY(-1px);
+}
+
+.btn[aria-disabled="true"] {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.preview {
+  background: #030712;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 0;
+}
+
+.hint {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.bar2 {
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 14px 18px;
+  border-radius: var(--radius);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.bar2 p { margin: 0; font-weight: 600; font-size: 13px; color: var(--text-muted); }
+
+.cols {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.col {
+  background: #030712;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+}
+.col.lead {
+  border-color: var(--primary);
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.col .n {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.col .n b { font-family: 'Outfit'; font-size: 18px; font-weight: 800; }
+.col .n span { font-size: 11px; color: var(--text-muted); }
+.col ul { list-style: none; padding: 0; margin: 6px 0 0; font-size: 12px; }
+
+.consensus {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: #030712;
+  padding: 6px;
+  border-radius: 6px;
+}
+
+.empty {
+  text-align: center;
+  padding: 40px 20px;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+}
+.empty h2 { font-family: 'Outfit'; color: var(--text); font-size: 20px; margin: 0 0 6px; }
+
+#toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111827;
+  color: #fff;
+  border: 1px solid var(--border);
+  padding: 12px 20px;
+  border-radius: 30px;
+  font-weight: 700;
+  font-size: 13px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  z-index: 100;
 }
 </style>
+</head>
+<body>
 
 <div class="wrap">
   <header>
-    <p class="kicker">Pronos entre potes · Paris</p>
+    <div class="kicker">Pronos entre potes</div>
     <h1>La Grille du Jour</h1>
     <p class="daylabel" id="daylabel"></p>
   </header>
 
-  <nav class="tabs" role="tablist" aria-label="Sections">
+  <nav class="tabs" role="tablist">
     <button class="tab" role="tab" type="button" id="tab-grille" data-tab="grille">Ma Grille</button>
     <button class="tab" role="tab" type="button" id="tab-synthese" data-tab="synthese">Synthèse (Ahmed)</button>
   </nav>
@@ -162,10 +482,7 @@ textarea{width:100%;min-height:140px;padding:12px;border:1px solid var(--line);b
 (function(){
   var TZ='Europe/Paris';
   var OPTS=['1','N','2'];
-
-  /* Matchs du jour, générés chaque matin par build.mjs. */
   var DAY=__DAY_JSON__;
-  /* Numéro WhatsApp d'Ahmed au format international, sans le +, par exemple 33612345678. Vide : l'ami choisit le contact. */
   var PHONE='__PHONE__';
 
   function $(id){return document.getElementById(id);}
@@ -233,7 +550,6 @@ textarea{width:100%;min-height:140px;padding:12px;border:1px solid var(--line);b
     return h('div',{class:'teams'},h('span',{text:m.h}),h('span',{class:'vs',text:'VS'}),h('span',{text:m.a}));
   }
 
-  /* ---------- Ma grille ---------- */
   function message(){
     var lines=['GRILLE '+DAY.date+' | '+(S.name||'').trim()];
     DAY.matches.forEach(function(m,i){
@@ -246,35 +562,36 @@ textarea{width:100%;min-height:140px;padding:12px;border:1px solid var(--line);b
   function ready(){return nbPicks()>0&&(S.name||'').trim().length>0;}
 
   async function copyText(txt,okMsg){
-    try{await navigator.clipboard.writeText(txt);toast(okMsg);return true;}
-    catch(e){return false;}
+    try{await navigator.clipboard.writeText(txt);toast(okMsg);return true;}catch(e){return false;}
   }
 
   function updateSend(){
     var box=$('send');
     if(!box)return;
     var msg=message();
-    $('preview').textContent=ready()?msg:'Ajoute ton prénom et coche au moins un prono pour voir ton message.';
+    $('preview').textContent=ready()?msg:'Entre ton prénom et coche au moins un prono.';
     var a=$('wa');
     a.href='https://wa.me/'+PHONE+'?text='+encodeURIComponent(msg);
     a.setAttribute('aria-disabled',ready()?'false':'true');
-    $('count').textContent=nbPicks()+' sur '+DAY.matches.length+' pronos';
+    $('count').textContent=nbPicks()+' / '+DAY.matches.length+' pronos sélectionnés';
   }
+
   function grilleView(){
     var out=[];
-    if(DAY.updated)out.push(h('div',{class:'note',text:'Cotes Betclic indicatives, relevées à '+DAY.updated+' (heure de Paris).'}));
-    var nick=h('input',{id:'nick',maxlength:'24',autocomplete:'given-name',placeholder:'Ex. Walid'});
+    if(DAY.updated)out.push(h('div',{class:'note',text:'Cotes Betclic relevées à '+DAY.updated+' (Paris).'}));
+    var nick=h('input',{id:'nick',maxlength:'24',placeholder:'Ex. Karim'});
     nick.value=S.name;
     nick.addEventListener('input',function(){S.name=nick.value;save();updateSend();});
     out.push(h('div',{class:'me'},h('label',{for:'nick',text:'Ton prénom'}),nick));
 
-    if(!DAY.matches.length){out.push(h('div',{class:'empty'},h('h2',{text:'Pas encore de matchs'}),h('p',{text:'Ahmed publie la grille chaque jour. Repasse un peu plus tard.'})));return out;}
+    if(!DAY.matches.length){out.push(h('div',{class:'empty'},h('h2',{text:'Aucun match'}),h('p',{text:'Reviens plus tard pour la nouvelle grille.'})));return out;}
 
-    var items=[];var lastComp=null;DAY.matches.forEach(function(m,i){
+    var items=[];var lastComp=null;
+    DAY.matches.forEach(function(m,i){
       var lock=locked(m),mine=S.picks[i];
       var labels={'1':m.h,'N':'Nul','2':m.a};
       var btns=OPTS.map(function(v){
-        return h('button',{type:'button',class:'slip'+(mine===v?' on':''),'aria-pressed':mine===v?'true':'false',disabled:lock?true:null,
+        return h('button',{type:'button',class:'slip'+(mine===v?' on':''),disabled:lock?true:null,
           onclick:function(){
             if(S.picks[i]===v)delete S.picks[i];else S.picks[i]=v;
             save();renderView();
@@ -286,13 +603,13 @@ textarea{width:100%;min-height:140px;padding:12px;border:1px solid var(--line);b
     out.push(h('ul',{class:'list'},items));
 
     var wa=h('a',{id:'wa',class:'btn primary',href:'#',target:'_blank',rel:'noopener',onclick:function(e){
-      if(!ready()){e.preventDefault();toast((S.name||'').trim()?'Coche au moins un prono.':'Ajoute ton prénom avant d’envoyer.');}
+      if(!ready()){e.preventDefault();toast('Renseigne ton prénom et au moins un pronostic.');}
     }},'Envoyer sur WhatsApp');
     var cp=h('button',{type:'button',class:'btn',onclick:async function(){
-      if(!ready()){toast((S.name||'').trim()?'Coche au moins un prono.':'Ajoute ton prénom avant de copier.');return;}
-      var ok=await copyText(message(),'Message copié. Colle-le dans ta conversation avec Ahmed.');
-      if(!ok){var p=$('preview');var r=document.createRange();r.selectNodeContents(p);var s=window.getSelection();s.removeAllRanges();s.addRange(r);toast('Sélectionne le message puis copie-le.');}
-    }},'Copier le message');
+      if(!ready()){toast('Renseigne ton prénom et au moins un pronostic.');return;}
+      await copyText(message(),'Copié ! Tu peux le coller à Ahmed.');
+    }},'Copier le texte');
+
     out.push(h('section',{class:'send',id:'send'},
       h('p',{class:'hint',id:'count'}),
       h('div',{class:'row'},wa,cp),
@@ -300,7 +617,6 @@ textarea{width:100%;min-height:140px;padding:12px;border:1px solid var(--line);b
     return out;
   }
 
-  /* ---------- Synthèse (Ahmed) ---------- */
   function parse(text){
     var byName={},cur=null,otherDay=false,seen=0;
     text.split(/\r?\n/).forEach(function(line){
@@ -323,463 +639,10 @@ textarea{width:100%;min-height:140px;padding:12px;border:1px solid var(--line);b
     return {tot:tot,best:best,tops:best>0?OPTS.filter(function(k){return t[k].length===best;}):[]};
   }
   function synthText(parsed){
-    var lines=['Grille du '+dayLabel(DAY.date)+' (heure de Paris)'];
+    var lines=['Grille du '+dayLabel(DAY.date)];
     DAY.matches.forEach(function(m,i){
       var t=tally(parsed,i),L=lead(t),res;
       if(!L.tot)res='aucun prono';
       else res=(L.tops.length===1?L.tops[0]:L.tops.join('/')+' (partagé)')+' ('+L.best+'/'+L.tot+')';
       var det=OPTS.filter(function(k){return t[k].length;}).map(function(k){return k+': '+t[k].join(', ');}).join(' | ');
-      lines.push((m.t?m.t+' ':'')+m.h+' – '+m.a+' → '+res+(det?'  ['+det+']':''));
-    });
-    return lines.join('\n');
-  }
-  function renderSynth(box){
-    var parsed=parse(S.pasted);
-    var names=Object.keys(parsed.byName);
-    var out=[];
-    if(!S.pasted.trim()){
-      out.push(h('div',{class:'empty'},h('h2',{text:'Colle les grilles reçues'}),h('p',{text:'Copie les messages WhatsApp de tes amis dans la zone ci-dessus. La synthèse se fait toute seule.'})));
-    }else if(!names.length){
-      out.push(h('div',{class:'empty'},h('h2',{text:'Aucune grille reconnue'}),h('p',{text:parsed.otherDay?'Les messages collés datent d’un autre jour que la grille affichée.':'Colle les messages tels qu’ils ont été envoyés, avec la ligne qui commence par GRILLE.'})));
-    }else{
-      if(parsed.otherDay)out.push(h('div',{class:'note',text:'Certains messages datent d’un autre jour et sont ignorés.'}));
-      out.push(h('div',{class:'bar2'},
-        h('p',{text:names.length+(names.length>1?' grilles lues':' grille lue')}),
-        h('button',{type:'button',class:'btn primary',onclick:async function(){
-          var ok=await copyText(synthText(parsed),'Synthèse copiée.');
-          if(!ok)toast('Copie impossible ici. Sélectionne le texte à la main.');
-        }},'Copier la synthèse')));
-      out.push(h('ul',{class:'list'},DAY.matches.map(function(m,i){
-        var t=tally(parsed,i),L=lead(t);
-        var cols=OPTS.map(function(k){
-          var isLead=L.tops.length===1&&L.tops[0]===k;
-          return h('div',{class:'col'+(isLead?' lead':'')},
-            h('div',{class:'n'},h('b',{text:k}),h('span',{text:String(t[k].length)})),
-            h('ul',null,t[k].slice().sort().map(function(n){return h('li',{text:n});})));
-        });
-        var cons;
-        if(!L.tot)cons='Aucun prono';
-        else if(L.tops.length===1)cons='Majorité : '+L.tops[0]+' ('+L.best+' sur '+L.tot+')';
-        else cons='Avis partagés ('+L.tot+' pronos)';
-        return h('li',null,head(m),teams(m),h('div',{class:'cols'},cols),h('p',{class:'consensus',text:cons}));
-      })));
-    }
-    box.replaceChildren.apply(box,out);
-  }
-  function synthView(){
-    var ta=h('textarea',{id:'paste','aria-label':'Messages reçus',placeholder:'GRILLE '+DAY.date+' | Walid\n1) Lorient – Rennes : 1\n2) Nantes – Lens : N'});
-    ta.value=S.pasted;
-    var res=h('div',{id:'synth'});
-    ta.addEventListener('input',function(){
-      S.pasted=ta.value;
-      try{localStorage.setItem('grille-collage-'+DAY.date,S.pasted);}catch(e){}
-      renderSynth(res);
-    });
-    renderSynth(res);
-    return [h('label',{for:'paste',text:'Messages reçus'}),ta,res];
-  }
-
-  function renderView(){
-    var v=$('view');
-    var kids=S.tab==='synthese'?synthView():grilleView();
-    v.replaceChildren.apply(v,kids);
-    updateSend();
-  }
-  function renderTabs(){
-    ['grille','synthese'].forEach(function(k){$('tab-'+k).setAttribute('aria-selected',S.tab===k?'true':'false');});
-  }
-  function tabFromHash(){
-    var t=(location.hash||'').slice(1);
-    if(t==='grille'||t==='synthese')S.tab=t;
-  }
-
-  document.querySelectorAll('.tab').forEach(function(b){
-    b.addEventListener('click',function(){
-      S.tab=b.getAttribute('data-tab');
-      try{location.hash=S.tab;}catch(e){}
-      renderTabs();renderView();
-    });
-  });
-  window.addEventListener('hashchange',function(){tabFromHash();renderTabs();renderView();});
-
-  load();
-  tabFromHash();
-  $('daylabel').textContent=dayLabel(DAY.date);
-  renderTabs();
-  renderView();
-  setInterval(function(){
-    if(S.tab==='grille'&&document.activeElement!==$('nick'))renderView();
-  },60000);
-})();
-</script>
-
-```
-  --ink:#15211B;
-  --muted:#58675F;
-  --line:#D6DDD7;
-  --accent:#0B5C45;
-  --accent-ink:#FFFFFF;
-  --tint:#E2EEE8;
-  --win:#1C7A3C;
-  --f-disp:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
-  --f-body:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif;
-  --f-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
-}
-@media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
-    --bg:#0D1511;--surface:#141E19;--ink:#E6EEE8;--muted:#94A59B;--line:#25332C;
-    --accent:#52C79C;--accent-ink:#052018;--tint:#163026;--win:#5CCF8A;
-    color-scheme:dark;
-  }
-}
-:root[data-theme="dark"]{
-  --bg:#0D1511;--surface:#141E19;--ink:#E6EEE8;--muted:#94A59B;--line:#25332C;
-  --accent:#52C79C;--accent-ink:#052018;--tint:#163026;--win:#5CCF8A;
-  color-scheme:dark;
-}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--f-body);
-  padding-block:20px 64px;
-  padding-left:max(16px,env(safe-area-inset-left,0px));
-  padding-right:max(16px,env(safe-area-inset-right,0px))}
-.wrap{max-width:760px;margin:0 auto}
-.kicker{font:500 12px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
-h1{font:700 clamp(34px,8vw,48px)/1 var(--f-disp);text-transform:uppercase;letter-spacing:.01em;margin:0 0 10px;text-wrap:balance}
-.daylabel{font:600 24px/1.1 var(--f-disp);margin:0;text-transform:capitalize}
-button,input,textarea{font:inherit;color:var(--ink)}
-.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 16px;border:1px solid var(--line);background:var(--surface);border-radius:8px;cursor:pointer;text-decoration:none}
-.btn:hover{border-color:var(--muted)}
-.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
-.btn[aria-disabled="true"]{opacity:.5;cursor:default}
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-input{min-height:44px;padding:8px 10px;border:1px solid var(--line);background:var(--surface);border-radius:8px;width:100%}
-label{display:block;font:500 12px/1.2 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
-
-.tabs{display:grid;grid-template-columns:repeat(2,1fr);margin:18px 0 16px;border-bottom:1px solid var(--line)}
-.tab{appearance:none;background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-1px;padding:10px 4px;
-  font:600 20px/1 var(--f-disp);text-transform:uppercase;letter-spacing:.03em;color:var(--muted);cursor:pointer}
-.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
-
-.note{background:var(--tint);border-radius:8px;padding:10px 12px;font-size:15px;margin-bottom:14px}
-.me{max-width:300px;margin-bottom:14px}
-.empty{border:1px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;color:var(--muted)}
-.empty h2{font:700 24px/1.1 var(--f-disp);text-transform:uppercase;color:var(--ink);margin:0 0 6px}
-.empty p{margin:0 auto;max-width:42ch}
-
-.list{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
-.list>li{padding:14px 16px;border-top:1px solid var(--line);min-width:0}
-.list>li:first-child{border-top:0}
-.mhead{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center}
-.time{font:500 14px/1 var(--f-mono)}
-.comp{flex:1;min-width:0;font:600 12px/1.2 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.pill{font:500 11px/1 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);border-radius:999px;padding:4px 8px;color:var(--muted)}
-.pill.open{background:var(--tint);border-color:transparent;color:var(--ink)}
-.teams{display:flex;flex-wrap:wrap;gap:0 10px;font:600 26px/1.15 var(--f-disp);margin:6px 0 10px;overflow-wrap:anywhere}
-.teams .vs{color:var(--muted)}
-.slips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.slip{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;padding:10px 6px 8px;
-  border:1.5px solid var(--line);background:var(--bg);border-radius:8px;cursor:pointer}
-.slip b{font:700 30px/1 var(--f-disp)}
-.slip small{font-size:12px;line-height:1.2;color:var(--muted);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.slip:hover:not(:disabled){border-color:var(--accent)}
-.slip:disabled{cursor:default;opacity:.55}
-.slip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);opacity:1}
-.slip.on small{color:inherit;opacity:.85}
-
-.list>li.grp{background:var(--tint);padding:8px 16px;font:600 13px/1.2 var(--f-body);letter-spacing:.08em;text-transform:uppercase}
-.slip .odd{font:500 13px/1 var(--f-mono);margin-top:4px;color:inherit}
-.send{margin-top:16px;display:grid;gap:12px}
-.send .row{display:flex;flex-wrap:wrap;gap:8px}
-.send .row .btn{flex:1 1 180px}
-.preview{margin:0;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font:13px/1.5 var(--f-mono);white-space:pre-wrap;overflow-wrap:anywhere}
-.hint{margin:0;font-size:14px;color:var(--muted)}
-
-textarea{width:100%;min-height:150px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font:13px/1.5 var(--f-mono);resize:vertical}
-.bar2{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;margin:12px 0}
-.bar2 p{margin:0;font:500 13px/1.3 var(--f-mono);color:var(--muted)}
-.cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.col{border:1px solid var(--line);border-radius:8px;padding:8px 8px 10px;min-width:0}
-.col.lead{border-color:var(--accent);background:var(--tint)}
-.col .n{display:flex;align-items:baseline;justify-content:space-between;gap:6px}
-.col .n b{font:700 28px/1 var(--f-disp)}
-.col .n span{font:500 13px/1 var(--f-mono);color:var(--muted)}
-.col ul{list-style:none;margin:6px 0 0;padding:0;font-size:14px;line-height:1.3;overflow-wrap:anywhere}
-.consensus{margin:8px 0 0;font:500 12px/1.3 var(--f-mono);color:var(--muted)}
-
-#toast{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));
-  max-width:420px;margin:0 auto;background:var(--ink);color:var(--bg);border-radius:8px;padding:10px 14px;font-size:15px;z-index:20}
-@media (max-width:420px){.slip b{font-size:28px}.teams{font-size:24px}.col .n b{font-size:26px}}
-@media (prefers-reduced-motion:no-preference){.btn,.slip{transition:border-color .15s,background-color .15s}}
-</style>
-
-<div class="wrap">
-  <header>
-    <p class="kicker">Pronos entre potes · horaires de Paris</p>
-    <h1>La grille du jour</h1>
-    <p class="daylabel" id="daylabel"></p>
-  </header>
-
-  <nav class="tabs" role="tablist" aria-label="Sections">
-    <button class="tab" role="tab" type="button" id="tab-grille" data-tab="grille">Ma grille</button>
-    <button class="tab" role="tab" type="button" id="tab-synthese" data-tab="synthese">Synthèse (Ahmed)</button>
-  </nav>
-
-  <main id="view"></main>
-  <div id="toast" role="status" hidden></div>
-</div>
-
-<script>
-(function(){
-  var TZ='Europe/Paris';
-  var OPTS=['1','N','2'];
-
-  /* Matchs du jour, générés chaque matin par build.mjs. */
-  var DAY=__DAY_JSON__;
-  /* Numéro WhatsApp d'Ahmed au format international, sans le +, par exemple 33612345678. Vide : l'ami choisit le contact. */
-  var PHONE='__PHONE__';
-
-  function $(id){return document.getElementById(id);}
-  function h(tag,attrs){
-    var e=document.createElement(tag);
-    attrs=attrs||{};
-    for(var k in attrs){
-      var v=attrs[k];
-      if(v==null||v===false)continue;
-      if(k==='class')e.className=v;
-      else if(k==='text')e.textContent=v;
-      else if(k.slice(0,2)==='on')e.addEventListener(k.slice(2),v);
-      else e.setAttribute(k,v===true?'':v);
-    }
-    for(var i=2;i<arguments.length;i++){
-      var c=arguments[i];
-      var list=Array.isArray(c)?c:[c];
-      for(var j=0;j<list.length;j++){
-        var x=list[j];
-        if(x==null||x===false)continue;
-        e.append(x.nodeType?x:document.createTextNode(String(x)));
-      }
-    }
-    return e;
-  }
-  function parisNow(){
-    var parts=new Intl.DateTimeFormat('en-CA',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date());
-    function g(t){for(var i=0;i<parts.length;i++){if(parts[i].type===t)return parts[i].value;}return '';}
-    return {day:g('year')+'-'+g('month')+'-'+g('day'),hm:g('hour')+':'+g('minute')};
-  }
-  function dayLabel(d){return new Date(d+'T12:00:00Z').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'});}
-
-  var S={tab:'grille',name:'',picks:{},pasted:''};
-  var toastTimer=null;
-  function toast(msg){var t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.hidden=true;},4000);}
-
-  function load(){
-    try{
-      S.name=localStorage.getItem('grille-nom')||'';
-      var r=localStorage.getItem('grille-'+DAY.date);
-      if(r){var o=JSON.parse(r);S.picks=o&&o.picks?o.picks:{};}
-      S.pasted=localStorage.getItem('grille-collage-'+DAY.date)||'';
-    }catch(e){}
-  }
-  function save(){
-    try{
-      localStorage.setItem('grille-nom',S.name);
-      localStorage.setItem('grille-'+DAY.date,JSON.stringify({picks:S.picks}));
-    }catch(e){}
-  }
-
-  function locked(m){
-    var n=parisNow();
-    if(DAY.date<n.day)return true;
-    if(DAY.date===n.day&&m.t&&m.t<=n.hm)return true;
-    return false;
-  }
-  function head(m,hideComp){
-    return h('div',{class:'mhead'},
-      h('span',{class:'time',text:m.t||'--:--'}),
-      h('span',{class:'comp',text:hideComp?'':(m.c||'')}),
-      locked(m)?h('span',{class:'pill',text:'Fermé'}):h('span',{class:'pill open',text:'Ouvert'}));
-  }
-  function teams(m){
-    return h('p',{class:'teams'},h('span',{text:m.h}),h('span',{class:'vs',text:'–'}),h('span',{text:m.a}));
-  }
-
-  /* ---------- Ma grille ---------- */
-  function message(){
-    var lines=['GRILLE '+DAY.date+' | '+(S.name||'').trim()];
-    DAY.matches.forEach(function(m,i){
-      var p=S.picks[i];
-      if(OPTS.indexOf(p)>=0)lines.push((i+1)+') '+m.h+' – '+m.a+' : '+p);
-    });
-    return lines.join('\n');
-  }
-  function nbPicks(){var n=0;DAY.matches.forEach(function(m,i){if(OPTS.indexOf(S.picks[i])>=0)n++;});return n;}
-  function ready(){return nbPicks()>0&&(S.name||'').trim().length>0;}
-
-  async function copyText(txt,okMsg){
-    try{await navigator.clipboard.writeText(txt);toast(okMsg);return true;}
-    catch(e){return false;}
-  }
-
-  function updateSend(){
-    var box=$('send');
-    if(!box)return;
-    var msg=message();
-    $('preview').textContent=ready()?msg:'Ajoute ton prénom et coche au moins un prono pour voir ton message.';
-    var a=$('wa');
-    a.href='https://wa.me/'+PHONE+'?text='+encodeURIComponent(msg);
-    a.setAttribute('aria-disabled',ready()?'false':'true');
-    $('count').textContent=nbPicks()+' sur '+DAY.matches.length+' pronos';
-  }
-  function grilleView(){
-    var out=[];
-    if(DAY.updated)out.push(h('div',{class:'note',text:'Cotes Betclic indicatives, relevées à '+DAY.updated+' (heure de Paris).'}));
-    var nick=h('input',{id:'nick',maxlength:'24',autocomplete:'given-name',placeholder:'Ex. Walid'});
-    nick.value=S.name;
-    nick.addEventListener('input',function(){S.name=nick.value;save();updateSend();});
-    out.push(h('div',{class:'me'},h('label',{for:'nick',text:'Ton prénom'}),nick));
-
-    if(!DAY.matches.length){out.push(h('div',{class:'empty'},h('h2',{text:'Pas encore de matchs'}),h('p',{text:'Ahmed publie la grille chaque jour. Repasse un peu plus tard.'})));return out;}
-
-    var items=[];var lastComp=null;DAY.matches.forEach(function(m,i){
-      var lock=locked(m),mine=S.picks[i];
-      var labels={'1':m.h,'N':'Nul','2':m.a};
-      var btns=OPTS.map(function(v){
-        return h('button',{type:'button',class:'slip'+(mine===v?' on':''),'aria-pressed':mine===v?'true':'false',disabled:lock?true:null,
-          onclick:function(){
-            if(S.picks[i]===v)delete S.picks[i];else S.picks[i]=v;
-            save();renderView();
-          }},h('b',{text:v}),h('small',{text:labels[v]}),(m.o&&m.o[OPTS.indexOf(v)]!=null)?h('span',{class:'odd',text:Number(m.o[OPTS.indexOf(v)]).toFixed(2)}):null);
-      });
-      if(m.c!==lastComp){items.push(h('li',{class:'grp',text:m.c||'Autres'}));lastComp=m.c;}
-      items.push(h('li',null,head(m,true),teams(m),h('div',{class:'slips'},btns)));
-    });
-    out.push(h('ol',{class:'list'},items));
-
-    var wa=h('a',{id:'wa',class:'btn primary',href:'#',target:'_blank',rel:'noopener',onclick:function(e){
-      if(!ready()){e.preventDefault();toast((S.name||'').trim()?'Coche au moins un prono.':'Ajoute ton prénom avant d’envoyer.');}
-    }},'Envoyer sur WhatsApp');
-    var cp=h('button',{type:'button',class:'btn',onclick:async function(){
-      if(!ready()){toast((S.name||'').trim()?'Coche au moins un prono.':'Ajoute ton prénom avant de copier.');return;}
-      var ok=await copyText(message(),'Message copié. Colle-le dans ta conversation avec Ahmed.');
-      if(!ok){var p=$('preview');var r=document.createRange();r.selectNodeContents(p);var s=window.getSelection();s.removeAllRanges();s.addRange(r);toast('Sélectionne le message puis copie-le.');}
-    }},'Copier le message');
-    out.push(h('section',{class:'send',id:'send'},
-      h('p',{class:'hint',id:'count'}),
-      h('div',{class:'row'},wa,cp),
-      h('pre',{class:'preview',id:'preview'})));
-    return out;
-  }
-
-  /* ---------- Synthèse (Ahmed) ---------- */
-  function parse(text){
-    var byName={},cur=null,otherDay=false,seen=0;
-    text.split(/\r?\n/).forEach(function(line){
-      var hd=line.match(/GRILLE\s+(\d{4}-\d{2}-\d{2})\s*\|\s*(.+?)\s*$/i);
-      if(hd){cur=hd[2].trim();if(hd[1]!==DAY.date){otherDay=true;cur=null;}else{byName[cur]=byName[cur]||{};seen++;}return;}
-      if(!cur)return;
-      var mm=line.match(/^\s*\d+\)\s*(.+?)\s+[–-]\s+(.+?)\s*:\s*([1N2])\s*$/i);
-      if(mm){for(var q=0;q<DAY.matches.length;q++){if(DAY.matches[q].h===mm[1]&&DAY.matches[q].a===mm[2]){byName[cur][q]=mm[3].toUpperCase();break;}}}
-    });
-    return {byName:byName,otherDay:otherDay,seen:seen};
-  }
-  function tally(parsed,i){
-    var t={'1':[],'N':[],'2':[]};
-    Object.keys(parsed.byName).forEach(function(n){var v=parsed.byName[n][i];if(OPTS.indexOf(v)>=0)t[v].push(n);});
-    return t;
-  }
-  function lead(t){
-    var tot=t['1'].length+t.N.length+t['2'].length,best=0;
-    OPTS.forEach(function(k){best=Math.max(best,t[k].length);});
-    return {tot:tot,best:best,tops:best>0?OPTS.filter(function(k){return t[k].length===best;}):[]};
-  }
-  function synthText(parsed){
-    var lines=['Grille du '+dayLabel(DAY.date)+' (heure de Paris)'];
-    DAY.matches.forEach(function(m,i){
-      var t=tally(parsed,i),L=lead(t),res;
-      if(!L.tot)res='aucun prono';
-      else res=(L.tops.length===1?L.tops[0]:L.tops.join('/')+' (partagé)')+' ('+L.best+'/'+L.tot+')';
-      var det=OPTS.filter(function(k){return t[k].length;}).map(function(k){return k+': '+t[k].join(', ');}).join(' | ');
-      lines.push((m.t?m.t+' ':'')+m.h+' – '+m.a+' → '+res+(det?'  ['+det+']':''));
-    });
-    return lines.join('\n');
-  }
-  function renderSynth(box){
-    var parsed=parse(S.pasted);
-    var names=Object.keys(parsed.byName);
-    var out=[];
-    if(!S.pasted.trim()){
-      out.push(h('div',{class:'empty'},h('h2',{text:'Colle les grilles reçues'}),h('p',{text:'Copie les messages WhatsApp de tes amis dans la zone ci-dessus. La synthèse se fait toute seule.'})));
-    }else if(!names.length){
-      out.push(h('div',{class:'empty'},h('h2',{text:'Aucune grille reconnue'}),h('p',{text:parsed.otherDay?'Les messages collés datent d’un autre jour que la grille affichée.':'Colle les messages tels qu’ils ont été envoyés, avec la ligne qui commence par GRILLE.'})));
-    }else{
-      if(parsed.otherDay)out.push(h('div',{class:'note',text:'Certains messages datent d’un autre jour et sont ignorés.'}));
-      out.push(h('div',{class:'bar2'},
-        h('p',{text:names.length+(names.length>1?' grilles lues':' grille lue')}),
-        h('button',{type:'button',class:'btn primary',onclick:async function(){
-          var ok=await copyText(synthText(parsed),'Synthèse copiée.');
-          if(!ok)toast('Copie impossible ici. Sélectionne le texte à la main.');
-        }},'Copier la synthèse')));
-      out.push(h('ol',{class:'list'},DAY.matches.map(function(m,i){
-        var t=tally(parsed,i),L=lead(t);
-        var cols=OPTS.map(function(k){
-          var isLead=L.tops.length===1&&L.tops[0]===k;
-          return h('div',{class:'col'+(isLead?' lead':'')},
-            h('div',{class:'n'},h('b',{text:k}),h('span',{text:String(t[k].length)})),
-            h('ul',null,t[k].slice().sort().map(function(n){return h('li',{text:n});})));
-        });
-        var cons;
-        if(!L.tot)cons='Aucun prono';
-        else if(L.tops.length===1)cons='Majorité : '+L.tops[0]+' ('+L.best+' sur '+L.tot+')';
-        else cons='Avis partagés ('+L.tot+' pronos)';
-        return h('li',null,head(m),teams(m),h('div',{class:'cols'},cols),h('p',{class:'consensus',text:cons}));
-      })));
-    }
-    box.replaceChildren.apply(box,out);
-  }
-  function synthView(){
-    var ta=h('textarea',{id:'paste','aria-label':'Messages reçus',placeholder:'GRILLE '+DAY.date+' | Walid\n1) Lorient – Rennes : 1\n2) Nantes – Lens : N'});
-    ta.value=S.pasted;
-    var res=h('div',{id:'synth'});
-    ta.addEventListener('input',function(){
-      S.pasted=ta.value;
-      try{localStorage.setItem('grille-collage-'+DAY.date,S.pasted);}catch(e){}
-      renderSynth(res);
-    });
-    renderSynth(res);
-    return [h('label',{for:'paste',text:'Messages reçus'}),ta,res];
-  }
-
-  function renderView(){
-    var v=$('view');
-    var kids=S.tab==='synthese'?synthView():grilleView();
-    v.replaceChildren.apply(v,kids);
-    updateSend();
-  }
-  function renderTabs(){
-    ['grille','synthese'].forEach(function(k){$('tab-'+k).setAttribute('aria-selected',S.tab===k?'true':'false');});
-  }
-  function tabFromHash(){
-    var t=(location.hash||'').slice(1);
-    if(t==='grille'||t==='synthese')S.tab=t;
-  }
-
-  document.querySelectorAll('.tab').forEach(function(b){
-    b.addEventListener('click',function(){
-      S.tab=b.getAttribute('data-tab');
-      try{location.hash=S.tab;}catch(e){}
-      renderTabs();renderView();
-    });
-  });
-  window.addEventListener('hashchange',function(){tabFromHash();renderTabs();renderView();});
-
-  load();
-  tabFromHash();
-  $('daylabel').textContent=dayLabel(DAY.date);
-  renderTabs();
-  renderView();
-  /* Réévalue l'ouverture/fermeture des matchs sans toucher à la saisie en cours. */
-  setInterval(function(){
-    if(S.tab==='grille'&&document.activeElement!==$('nick'))renderView();
-  },60000);
-})();
-</script>
+      lines.push((m.t?m.t+' ':'')+m.h+' – '+m.a
