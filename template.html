@@ -593,7 +593,7 @@ input:focus, textarea:focus { border-color: var(--primary); }
       var det=OPTS.filter(function(k){return t[k].length;}).map(function(k){return k+': '+t[k].join(', ');}).join(' | ');
       lines.push((m.t?m.t+' ':'')+m.h+' – '+m.a+' → '+res+(det?'  ['+det+']':''));
     });
-    lines.join('\n');
+    return lines.join('\n');
   }
   function renderSynth(box){
     var parsed=parse(S.pasted);
