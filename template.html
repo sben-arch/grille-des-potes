@@ -1,0 +1,377 @@
+<title>Grille des potes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one narrow column that reads like a betting slip: title, two tabs, one ruled list of matches with 1 / N / 2 stamps. */
+:root{
+  --bg:#F1F4F0;
+  --surface:#FFFFFF;
+  --ink:#15211B;
+  --muted:#58675F;
+  --line:#D6DDD7;
+  --accent:#0B5C45;
+  --accent-ink:#FFFFFF;
+  --tint:#E2EEE8;
+  --win:#1C7A3C;
+  --f-disp:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  --f-body:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D1511;--surface:#141E19;--ink:#E6EEE8;--muted:#94A59B;--line:#25332C;
+    --accent:#52C79C;--accent-ink:#052018;--tint:#163026;--win:#5CCF8A;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D1511;--surface:#141E19;--ink:#E6EEE8;--muted:#94A59B;--line:#25332C;
+  --accent:#52C79C;--accent-ink:#052018;--tint:#163026;--win:#5CCF8A;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--f-body);
+  padding-block:20px 64px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:760px;margin:0 auto}
+.kicker{font:500 12px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+h1{font:700 clamp(34px,8vw,48px)/1 var(--f-disp);text-transform:uppercase;letter-spacing:.01em;margin:0 0 10px;text-wrap:balance}
+.daylabel{font:600 24px/1.1 var(--f-disp);margin:0;text-transform:capitalize}
+button,input,textarea{font:inherit;color:var(--ink)}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 16px;border:1px solid var(--line);background:var(--surface);border-radius:8px;cursor:pointer;text-decoration:none}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.btn[aria-disabled="true"]{opacity:.5;cursor:default}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input{min-height:44px;padding:8px 10px;border:1px solid var(--line);background:var(--surface);border-radius:8px;width:100%}
+label{display:block;font:500 12px/1.2 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+
+.tabs{display:grid;grid-template-columns:repeat(2,1fr);margin:18px 0 16px;border-bottom:1px solid var(--line)}
+.tab{appearance:none;background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-1px;padding:10px 4px;
+  font:600 20px/1 var(--f-disp);text-transform:uppercase;letter-spacing:.03em;color:var(--muted);cursor:pointer}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+
+.note{background:var(--tint);border-radius:8px;padding:10px 12px;font-size:15px;margin-bottom:14px}
+.me{max-width:300px;margin-bottom:14px}
+.empty{border:1px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;color:var(--muted)}
+.empty h2{font:700 24px/1.1 var(--f-disp);text-transform:uppercase;color:var(--ink);margin:0 0 6px}
+.empty p{margin:0 auto;max-width:42ch}
+
+.list{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.list>li{padding:14px 16px;border-top:1px solid var(--line);min-width:0}
+.list>li:first-child{border-top:0}
+.mhead{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center}
+.time{font:500 14px/1 var(--f-mono)}
+.comp{flex:1;min-width:0;font:600 12px/1.2 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.pill{font:500 11px/1 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);border-radius:999px;padding:4px 8px;color:var(--muted)}
+.pill.open{background:var(--tint);border-color:transparent;color:var(--ink)}
+.teams{display:flex;flex-wrap:wrap;gap:0 10px;font:600 26px/1.15 var(--f-disp);margin:6px 0 10px;overflow-wrap:anywhere}
+.teams .vs{color:var(--muted)}
+.slips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.slip{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;padding:10px 6px 8px;
+  border:1.5px solid var(--line);background:var(--bg);border-radius:8px;cursor:pointer}
+.slip b{font:700 30px/1 var(--f-disp)}
+.slip small{font-size:12px;line-height:1.2;color:var(--muted);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.slip:hover:not(:disabled){border-color:var(--accent)}
+.slip:disabled{cursor:default;opacity:.55}
+.slip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);opacity:1}
+.slip.on small{color:inherit;opacity:.85}
+
+.list>li.grp{background:var(--tint);padding:8px 16px;font:600 13px/1.2 var(--f-body);letter-spacing:.08em;text-transform:uppercase}
+.slip .odd{font:500 13px/1 var(--f-mono);margin-top:4px;color:inherit}
+.send{margin-top:16px;display:grid;gap:12px}
+.send .row{display:flex;flex-wrap:wrap;gap:8px}
+.send .row .btn{flex:1 1 180px}
+.preview{margin:0;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font:13px/1.5 var(--f-mono);white-space:pre-wrap;overflow-wrap:anywhere}
+.hint{margin:0;font-size:14px;color:var(--muted)}
+
+textarea{width:100%;min-height:150px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font:13px/1.5 var(--f-mono);resize:vertical}
+.bar2{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;margin:12px 0}
+.bar2 p{margin:0;font:500 13px/1.3 var(--f-mono);color:var(--muted)}
+.cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.col{border:1px solid var(--line);border-radius:8px;padding:8px 8px 10px;min-width:0}
+.col.lead{border-color:var(--accent);background:var(--tint)}
+.col .n{display:flex;align-items:baseline;justify-content:space-between;gap:6px}
+.col .n b{font:700 28px/1 var(--f-disp)}
+.col .n span{font:500 13px/1 var(--f-mono);color:var(--muted)}
+.col ul{list-style:none;margin:6px 0 0;padding:0;font-size:14px;line-height:1.3;overflow-wrap:anywhere}
+.consensus{margin:8px 0 0;font:500 12px/1.3 var(--f-mono);color:var(--muted)}
+
+#toast{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));
+  max-width:420px;margin:0 auto;background:var(--ink);color:var(--bg);border-radius:8px;padding:10px 14px;font-size:15px;z-index:20}
+@media (max-width:420px){.slip b{font-size:28px}.teams{font-size:24px}.col .n b{font-size:26px}}
+@media (prefers-reduced-motion:no-preference){.btn,.slip{transition:border-color .15s,background-color .15s}}
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="kicker">Pronos entre potes · horaires de Paris</p>
+    <h1>La grille du jour</h1>
+    <p class="daylabel" id="daylabel"></p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button class="tab" role="tab" type="button" id="tab-grille" data-tab="grille">Ma grille</button>
+    <button class="tab" role="tab" type="button" id="tab-synthese" data-tab="synthese">Synthèse (Ahmed)</button>
+  </nav>
+
+  <main id="view"></main>
+  <div id="toast" role="status" hidden></div>
+</div>
+
+<script>
+(function(){
+  var TZ='Europe/Paris';
+  var OPTS=['1','N','2'];
+
+  /* Matchs du jour, générés chaque matin par build.mjs. */
+  var DAY=__DAY_JSON__;
+  /* Numéro WhatsApp d'Ahmed au format international, sans le +, par exemple 33612345678. Vide : l'ami choisit le contact. */
+  var PHONE='__PHONE__';
+
+  function $(id){return document.getElementById(id);}
+  function h(tag,attrs){
+    var e=document.createElement(tag);
+    attrs=attrs||{};
+    for(var k in attrs){
+      var v=attrs[k];
+      if(v==null||v===false)continue;
+      if(k==='class')e.className=v;
+      else if(k==='text')e.textContent=v;
+      else if(k.slice(0,2)==='on')e.addEventListener(k.slice(2),v);
+      else e.setAttribute(k,v===true?'':v);
+    }
+    for(var i=2;i<arguments.length;i++){
+      var c=arguments[i];
+      var list=Array.isArray(c)?c:[c];
+      for(var j=0;j<list.length;j++){
+        var x=list[j];
+        if(x==null||x===false)continue;
+        e.append(x.nodeType?x:document.createTextNode(String(x)));
+      }
+    }
+    return e;
+  }
+  function parisNow(){
+    var parts=new Intl.DateTimeFormat('en-CA',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date());
+    function g(t){for(var i=0;i<parts.length;i++){if(parts[i].type===t)return parts[i].value;}return '';}
+    return {day:g('year')+'-'+g('month')+'-'+g('day'),hm:g('hour')+':'+g('minute')};
+  }
+  function dayLabel(d){return new Date(d+'T12:00:00Z').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'});}
+
+  var S={tab:'grille',name:'',picks:{},pasted:''};
+  var toastTimer=null;
+  function toast(msg){var t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.hidden=true;},4000);}
+
+  function load(){
+    try{
+      S.name=localStorage.getItem('grille-nom')||'';
+      var r=localStorage.getItem('grille-'+DAY.date);
+      if(r){var o=JSON.parse(r);S.picks=o&&o.picks?o.picks:{};}
+      S.pasted=localStorage.getItem('grille-collage-'+DAY.date)||'';
+    }catch(e){}
+  }
+  function save(){
+    try{
+      localStorage.setItem('grille-nom',S.name);
+      localStorage.setItem('grille-'+DAY.date,JSON.stringify({picks:S.picks}));
+    }catch(e){}
+  }
+
+  function locked(m){
+    var n=parisNow();
+    if(DAY.date<n.day)return true;
+    if(DAY.date===n.day&&m.t&&m.t<=n.hm)return true;
+    return false;
+  }
+  function head(m,hideComp){
+    return h('div',{class:'mhead'},
+      h('span',{class:'time',text:m.t||'--:--'}),
+      h('span',{class:'comp',text:hideComp?'':(m.c||'')}),
+      locked(m)?h('span',{class:'pill',text:'Fermé'}):h('span',{class:'pill open',text:'Ouvert'}));
+  }
+  function teams(m){
+    return h('p',{class:'teams'},h('span',{text:m.h}),h('span',{class:'vs',text:'–'}),h('span',{text:m.a}));
+  }
+
+  /* ---------- Ma grille ---------- */
+  function message(){
+    var lines=['GRILLE '+DAY.date+' | '+(S.name||'').trim()];
+    DAY.matches.forEach(function(m,i){
+      var p=S.picks[i];
+      if(OPTS.indexOf(p)>=0)lines.push((i+1)+') '+m.h+' – '+m.a+' : '+p);
+    });
+    return lines.join('\n');
+  }
+  function nbPicks(){var n=0;DAY.matches.forEach(function(m,i){if(OPTS.indexOf(S.picks[i])>=0)n++;});return n;}
+  function ready(){return nbPicks()>0&&(S.name||'').trim().length>0;}
+
+  async function copyText(txt,okMsg){
+    try{await navigator.clipboard.writeText(txt);toast(okMsg);return true;}
+    catch(e){return false;}
+  }
+
+  function updateSend(){
+    var box=$('send');
+    if(!box)return;
+    var msg=message();
+    $('preview').textContent=ready()?msg:'Ajoute ton prénom et coche au moins un prono pour voir ton message.';
+    var a=$('wa');
+    a.href='https://wa.me/'+PHONE+'?text='+encodeURIComponent(msg);
+    a.setAttribute('aria-disabled',ready()?'false':'true');
+    $('count').textContent=nbPicks()+' sur '+DAY.matches.length+' pronos';
+  }
+  function grilleView(){
+    var out=[];
+    if(DAY.updated)out.push(h('div',{class:'note',text:'Cotes Betclic indicatives, relevées à '+DAY.updated+' (heure de Paris).'}));
+    var nick=h('input',{id:'nick',maxlength:'24',autocomplete:'given-name',placeholder:'Ex. Walid'});
+    nick.value=S.name;
+    nick.addEventListener('input',function(){S.name=nick.value;save();updateSend();});
+    out.push(h('div',{class:'me'},h('label',{for:'nick',text:'Ton prénom'}),nick));
+
+    if(!DAY.matches.length){out.push(h('div',{class:'empty'},h('h2',{text:'Pas encore de matchs'}),h('p',{text:'Ahmed publie la grille chaque jour. Repasse un peu plus tard.'})));return out;}
+
+    var items=[];var lastComp=null;DAY.matches.forEach(function(m,i){
+      var lock=locked(m),mine=S.picks[i];
+      var labels={'1':m.h,'N':'Nul','2':m.a};
+      var btns=OPTS.map(function(v){
+        return h('button',{type:'button',class:'slip'+(mine===v?' on':''),'aria-pressed':mine===v?'true':'false',disabled:lock?true:null,
+          onclick:function(){
+            if(S.picks[i]===v)delete S.picks[i];else S.picks[i]=v;
+            save();renderView();
+          }},h('b',{text:v}),h('small',{text:labels[v]}),(m.o&&m.o[OPTS.indexOf(v)]!=null)?h('span',{class:'odd',text:Number(m.o[OPTS.indexOf(v)]).toFixed(2)}):null);
+      });
+      if(m.c!==lastComp){items.push(h('li',{class:'grp',text:m.c||'Autres'}));lastComp=m.c;}
+      items.push(h('li',null,head(m,true),teams(m),h('div',{class:'slips'},btns)));
+    });
+    out.push(h('ol',{class:'list'},items));
+
+    var wa=h('a',{id:'wa',class:'btn primary',href:'#',target:'_blank',rel:'noopener',onclick:function(e){
+      if(!ready()){e.preventDefault();toast((S.name||'').trim()?'Coche au moins un prono.':'Ajoute ton prénom avant d’envoyer.');}
+    }},'Envoyer sur WhatsApp');
+    var cp=h('button',{type:'button',class:'btn',onclick:async function(){
+      if(!ready()){toast((S.name||'').trim()?'Coche au moins un prono.':'Ajoute ton prénom avant de copier.');return;}
+      var ok=await copyText(message(),'Message copié. Colle-le dans ta conversation avec Ahmed.');
+      if(!ok){var p=$('preview');var r=document.createRange();r.selectNodeContents(p);var s=window.getSelection();s.removeAllRanges();s.addRange(r);toast('Sélectionne le message puis copie-le.');}
+    }},'Copier le message');
+    out.push(h('section',{class:'send',id:'send'},
+      h('p',{class:'hint',id:'count'}),
+      h('div',{class:'row'},wa,cp),
+      h('pre',{class:'preview',id:'preview'})));
+    return out;
+  }
+
+  /* ---------- Synthèse (Ahmed) ---------- */
+  function parse(text){
+    var byName={},cur=null,otherDay=false,seen=0;
+    text.split(/\r?\n/).forEach(function(line){
+      var hd=line.match(/GRILLE\s+(\d{4}-\d{2}-\d{2})\s*\|\s*(.+?)\s*$/i);
+      if(hd){cur=hd[2].trim();if(hd[1]!==DAY.date){otherDay=true;cur=null;}else{byName[cur]=byName[cur]||{};seen++;}return;}
+      if(!cur)return;
+      var mm=line.match(/^\s*\d+\)\s*(.+?)\s+[–-]\s+(.+?)\s*:\s*([1N2])\s*$/i);
+      if(mm){for(var q=0;q<DAY.matches.length;q++){if(DAY.matches[q].h===mm[1]&&DAY.matches[q].a===mm[2]){byName[cur][q]=mm[3].toUpperCase();break;}}}
+    });
+    return {byName:byName,otherDay:otherDay,seen:seen};
+  }
+  function tally(parsed,i){
+    var t={'1':[],'N':[],'2':[]};
+    Object.keys(parsed.byName).forEach(function(n){var v=parsed.byName[n][i];if(OPTS.indexOf(v)>=0)t[v].push(n);});
+    return t;
+  }
+  function lead(t){
+    var tot=t['1'].length+t.N.length+t['2'].length,best=0;
+    OPTS.forEach(function(k){best=Math.max(best,t[k].length);});
+    return {tot:tot,best:best,tops:best>0?OPTS.filter(function(k){return t[k].length===best;}):[]};
+  }
+  function synthText(parsed){
+    var lines=['Grille du '+dayLabel(DAY.date)+' (heure de Paris)'];
+    DAY.matches.forEach(function(m,i){
+      var t=tally(parsed,i),L=lead(t),res;
+      if(!L.tot)res='aucun prono';
+      else res=(L.tops.length===1?L.tops[0]:L.tops.join('/')+' (partagé)')+' ('+L.best+'/'+L.tot+')';
+      var det=OPTS.filter(function(k){return t[k].length;}).map(function(k){return k+': '+t[k].join(', ');}).join(' | ');
+      lines.push((m.t?m.t+' ':'')+m.h+' – '+m.a+' → '+res+(det?'  ['+det+']':''));
+    });
+    return lines.join('\n');
+  }
+  function renderSynth(box){
+    var parsed=parse(S.pasted);
+    var names=Object.keys(parsed.byName);
+    var out=[];
+    if(!S.pasted.trim()){
+      out.push(h('div',{class:'empty'},h('h2',{text:'Colle les grilles reçues'}),h('p',{text:'Copie les messages WhatsApp de tes amis dans la zone ci-dessus. La synthèse se fait toute seule.'})));
+    }else if(!names.length){
+      out.push(h('div',{class:'empty'},h('h2',{text:'Aucune grille reconnue'}),h('p',{text:parsed.otherDay?'Les messages collés datent d’un autre jour que la grille affichée.':'Colle les messages tels qu’ils ont été envoyés, avec la ligne qui commence par GRILLE.'})));
+    }else{
+      if(parsed.otherDay)out.push(h('div',{class:'note',text:'Certains messages datent d’un autre jour et sont ignorés.'}));
+      out.push(h('div',{class:'bar2'},
+        h('p',{text:names.length+(names.length>1?' grilles lues':' grille lue')}),
+        h('button',{type:'button',class:'btn primary',onclick:async function(){
+          var ok=await copyText(synthText(parsed),'Synthèse copiée.');
+          if(!ok)toast('Copie impossible ici. Sélectionne le texte à la main.');
+        }},'Copier la synthèse')));
+      out.push(h('ol',{class:'list'},DAY.matches.map(function(m,i){
+        var t=tally(parsed,i),L=lead(t);
+        var cols=OPTS.map(function(k){
+          var isLead=L.tops.length===1&&L.tops[0]===k;
+          return h('div',{class:'col'+(isLead?' lead':'')},
+            h('div',{class:'n'},h('b',{text:k}),h('span',{text:String(t[k].length)})),
+            h('ul',null,t[k].slice().sort().map(function(n){return h('li',{text:n});})));
+        });
+        var cons;
+        if(!L.tot)cons='Aucun prono';
+        else if(L.tops.length===1)cons='Majorité : '+L.tops[0]+' ('+L.best+' sur '+L.tot+')';
+        else cons='Avis partagés ('+L.tot+' pronos)';
+        return h('li',null,head(m),teams(m),h('div',{class:'cols'},cols),h('p',{class:'consensus',text:cons}));
+      })));
+    }
+    box.replaceChildren.apply(box,out);
+  }
+  function synthView(){
+    var ta=h('textarea',{id:'paste','aria-label':'Messages reçus',placeholder:'GRILLE '+DAY.date+' | Walid\n1) Lorient – Rennes : 1\n2) Nantes – Lens : N'});
+    ta.value=S.pasted;
+    var res=h('div',{id:'synth'});
+    ta.addEventListener('input',function(){
+      S.pasted=ta.value;
+      try{localStorage.setItem('grille-collage-'+DAY.date,S.pasted);}catch(e){}
+      renderSynth(res);
+    });
+    renderSynth(res);
+    return [h('label',{for:'paste',text:'Messages reçus'}),ta,res];
+  }
+
+  function renderView(){
+    var v=$('view');
+    var kids=S.tab==='synthese'?synthView():grilleView();
+    v.replaceChildren.apply(v,kids);
+    updateSend();
+  }
+  function renderTabs(){
+    ['grille','synthese'].forEach(function(k){$('tab-'+k).setAttribute('aria-selected',S.tab===k?'true':'false');});
+  }
+  function tabFromHash(){
+    var t=(location.hash||'').slice(1);
+    if(t==='grille'||t==='synthese')S.tab=t;
+  }
+
+  document.querySelectorAll('.tab').forEach(function(b){
+    b.addEventListener('click',function(){
+      S.tab=b.getAttribute('data-tab');
+      try{location.hash=S.tab;}catch(e){}
+      renderTabs();renderView();
+    });
+  });
+  window.addEventListener('hashchange',function(){tabFromHash();renderTabs();renderView();});
+
+  load();
+  tabFromHash();
+  $('daylabel').textContent=dayLabel(DAY.date);
+  renderTabs();
+  renderView();
+  /* Réévalue l'ouverture/fermeture des matchs sans toucher à la saisie en cours. */
+  setInterval(function(){
+    if(S.tab==='grille'&&document.activeElement!==$('nick'))renderView();
+  },60000);
+})();
+</script>
