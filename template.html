@@ -412,6 +412,27 @@ input:focus, textarea:focus { border-color: var(--primary); }
   z-index: 100;
   box-shadow: 0 10px 25px rgba(0,0,0,0.5);
 }
+
+.pill{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);border:1px solid var(--border);border-radius:6px;padding:3px 6px}
+.note.warn{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.35);color:#fcd34d}
+.hint.nodds{margin-top:8px;text-align:center}
+.bar2{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;margin:12px 0}
+.btn.small{flex:0 0 auto;min-height:40px;padding:0 16px}
+.synth-item{padding:12px 16px}
+.synth-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.col{border:1px solid var(--border);border-radius:8px;padding:8px;min-width:0;background:#0d1322}
+.col.lead{border-color:var(--primary);box-shadow:0 0 10px var(--primary-glow)}
+.col .n{display:flex;align-items:baseline;justify-content:space-between;gap:6px}
+.col .n b{font-family:'Outfit',sans-serif;font-size:22px;font-weight:900}
+.col .n span{font-size:12px;font-weight:700;color:var(--text-muted)}
+.col ul{list-style:none;margin:6px 0 0;padding:0;font-size:13px;line-height:1.3;overflow-wrap:anywhere}
+.consensus{margin:8px 0 0;font-size:12px;font-weight:600;color:var(--text-muted)}
+textarea{min-height:130px;margin-bottom:12px;resize:vertical}
+.match-summary:focus-visible,.slip:focus-visible,.btn:focus-visible,.tab:focus-visible,input:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.slip:disabled{opacity:.5;cursor:default}
+.teams-mini{overflow-wrap:anywhere}
+.match-right{flex-shrink:0}
 </style>
 </head>
 <body>
@@ -435,7 +456,10 @@ input:focus, textarea:focus { border-color: var(--primary); }
 <script>
 document.addEventListener("DOMContentLoaded", function(){
   var TZ='Europe/Paris';
+  var OPTS=['1','N','2'];
+  /* Matchs du jour et cotes Betclic, générés chaque matin par build.mjs. */
   var DAY=__DAY_JSON__;
+  /* Numéro WhatsApp d'Ahmed au format international, sans le +. Vide : l'ami choisit le contact. */
   var PHONE='__PHONE__';
 
   function $(id){return document.getElementById(id);}
@@ -468,22 +492,25 @@ document.addEventListener("DOMContentLoaded", function(){
   }
   function dayLabel(d){return new Date(d+'T12:00:00Z').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'});}
 
-  var S={tab:'grille',name:'',picks:{},pasted:''};
+  var MATCHES=DAY.matches||[];
+  var S={tab:'grille',name:'',picks:{},pasted:'',open:{}};
   var toastTimer=null;
   function toast(msg){var t=$('toast');if(t){t.textContent=msg;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.hidden=true;},4000);}}
+  function mk(m){return m.h+'|'+m.a;}
+  function gLabel(g){return (g.charAt(0)==='+'?'Plus de ':'Moins de ')+g.slice(1)+' buts';}
 
   function load(){
     try{
       S.name=localStorage.getItem('grille-nom')||'';
-      var r=localStorage.getItem('grille-'+DAY.date);
-      if(r){var o=JSON.parse(r);S.picks=o&&o.picks?o.picks:{};}
+      var r=localStorage.getItem('grille2-'+DAY.date);
+      if(r){var o=JSON.parse(r);S.picks=(o&&o.picks&&typeof o.picks==='object')?o.picks:{};}
       S.pasted=localStorage.getItem('grille-collage-'+DAY.date)||'';
     }catch(e){}
   }
   function save(){
     try{
       localStorage.setItem('grille-nom',S.name);
-      localStorage.setItem('grille-'+DAY.date,JSON.stringify({picks:S.picks}));
+      localStorage.setItem('grille2-'+DAY.date,JSON.stringify({picks:S.picks}));
     }catch(e){}
   }
 
@@ -493,24 +520,38 @@ document.addEventListener("DOMContentLoaded", function(){
     if(DAY.date===n.day&&m.t&&m.t<=n.hm)return true;
     return false;
   }
+  function setPick(m,field,val){
+    var k=mk(m),p=S.picks[k]||{};
+    if(p[field]===val)delete p[field];else p[field]=val;
+    if(!p.r&&!p.g)delete S.picks[k];else S.picks[k]=p;
+    save();renderView();
+  }
 
+  /* ---------- Ma grille ---------- */
   function message(){
     var lines=['GRILLE '+DAY.date+' | '+(S.name||'').trim()];
-    if(DAY.matches) {
-      DAY.matches.forEach(function(m,i){
-        var p=S.picks[i];
-        if(p) {
-          var labelChoice = p;
-          if(p.startsWith('OVER_')) labelChoice = 'Plus de ' + p.split('_')[1] + ' buts';
-          if(p.startsWith('UNDER_')) labelChoice = 'Moins de ' + p.split('_')[1] + ' buts';
-          lines.push((i+1)+') '+m.h+' – '+m.a+' : '+labelChoice);
-        }
-      });
-    }
+    MATCHES.forEach(function(m,i){
+      var p=S.picks[mk(m)]||{};
+      if(p.r)lines.push((i+1)+') '+m.h+' – '+m.a+' : '+p.r);
+      if(p.g)lines.push((i+1)+') '+m.h+' – '+m.a+' : '+gLabel(p.g));
+    });
+    var c=combo();
+    if(c.n>1)lines.push('Combiné indicatif : '+c.n+' sélections, cote ≈ '+c.odds.toFixed(2));
     return lines.join('\n');
   }
-  function nbPicks(){var n=0; if(DAY.matches) DAY.matches.forEach(function(m,i){if(S.picks[i])n++;}); return n;}
+  function nbPicks(){var n=0;MATCHES.forEach(function(m){var p=S.picks[mk(m)];if(p&&(p.r||p.g))n++;});return n;}
   function ready(){return nbPicks()>0&&(S.name||'').trim().length>0;}
+  /* Cote combinée indicative : produit des cotes Betclic des sélections cochées. */
+  function combo(){
+    var prod=1,n=0;
+    MATCHES.forEach(function(m){
+      var p=S.picks[mk(m)];
+      if(!p)return;
+      if(p.r){var v=m.o&&m.o[OPTS.indexOf(p.r)];if(v!=null){prod*=v;n++;}}
+      if(p.g){var d=(m.totals||{})[p.g.slice(1)],v2=d&&(p.g.charAt(0)==='+'?d.over:d.under);if(v2!=null){prod*=v2;n++;}}
+    });
+    return {n:n,odds:n?prod:null};
+  }
 
   async function copyText(txt,okMsg){
     try{await navigator.clipboard.writeText(txt);toast(okMsg);return true;}catch(e){return false;}
@@ -521,103 +562,83 @@ document.addEventListener("DOMContentLoaded", function(){
     if(!box)return;
     var msg=message();
     var previewEl=$('preview');
-    if(previewEl) previewEl.textContent=ready()?msg:'Entre ton prénom et coche au moins un pronostic.';
+    if(previewEl)previewEl.textContent=ready()?msg:'Entre ton prénom et coche au moins un pronostic.';
     var a=$('wa');
     if(a){
       a.href='https://wa.me/'+PHONE+'?text='+encodeURIComponent(msg);
       a.setAttribute('aria-disabled',ready()?'false':'true');
     }
     var countEl=$('count');
-    if(countEl) countEl.textContent=nbPicks()+' / '+(DAY.matches ? DAY.matches.length : 0)+' pronos sélectionnés';
+    if(countEl)countEl.textContent=nbPicks()+' / '+MATCHES.length+' matchs avec un pronostic';
+    var cb=$('combo'),c=combo();
+    if(cb)cb.textContent=c.n>1?'Combiné : '+c.n+' sélections, cote indicative ≈ '+c.odds.toFixed(2)+'. Produit des cotes affichées : vérifie sur Betclic, certains paris d’un même match ne se combinent pas.':'';
   }
 
   function grilleView(){
     var out=[];
-    if(DAY.updated)out.push(h('div',{class:'note',text:'Cotes Betclic relevées à '+DAY.updated+' (Paris).'}));
-    var nick=h('input',{id:'nick',maxlength:'24',placeholder:'Ex. Karim'});
+    var today=parisNow().day;
+    if(DAY.date!==today)out.push(h('div',{class:'note warn',text:'Cette grille date du '+dayLabel(DAY.date)+'. La grille du jour arrive dès la prochaine mise à jour.'}));
+    else if(DAY.updated)out.push(h('div',{class:'note',text:'Cotes Betclic relevées à '+DAY.updated+' (Paris).'}));
+    var nick=h('input',{id:'nick',maxlength:'24',placeholder:'Ex. Karim',autocomplete:'given-name'});
     nick.value=S.name;
     nick.addEventListener('input',function(){S.name=nick.value;save();updateSend();});
     out.push(h('div',{class:'me'},h('label',{for:'nick',text:'Ton prénom'}),nick));
 
-    if(!DAY.matches || !DAY.matches.length){
+    if(!MATCHES.length){
       out.push(h('div',{class:'empty'},h('h2',{text:'Aucun match'}),h('p',{text:'Reviens plus tard pour la nouvelle grille.'})));
       return out;
     }
 
-    var items=[];var lastComp=null;
-    DAY.matches.forEach(function(m,i){
-      var lock=locked(m),mine=S.picks[i];
+    var items=[],lastComp=null;
+    MATCHES.forEach(function(m){
+      var key=mk(m),lock=locked(m),p=S.picks[key]||{};
       var labels={'1':m.h,'N':'Nul','2':m.a};
-      
-      var pickBadgeText = mine ? (mine.startsWith('OVER_') ? '+'+mine.split('_')[1] : mine.startsWith('UNDER_') ? '-'+mine.split('_')[1] : mine) : '';
-      var rightSideMini = h('div',{class:'match-right'},
-        pickBadgeText ? h('span',{class:'badge-pick',text:pickBadgeText}) : null,
-        locked(m)?h('span',{class:'pill',text:'Fermé'}):null,
-        h('span',{class:'arrow',text:'▼'})
-      ];
 
-      var summaryEl = h('div',{class:'match-summary',onclick:function(e){
-        liEl.classList.toggle('open');
-      }},
+      var liEl=h('li',{class:S.open[key]?'open':null});
+      var badges=[];
+      if(p.r)badges.push(h('span',{class:'badge-pick',text:p.r}));
+      if(p.g)badges.push(h('span',{class:'badge-pick',text:p.g}));
+      var summaryEl=h('div',{class:'match-summary',role:'button',tabindex:'0','aria-expanded':S.open[key]?'true':'false',onclick:function(){
+        S.open[key]=!S.open[key];
+        liEl.classList.toggle('open',!!S.open[key]);
+        summaryEl.setAttribute('aria-expanded',S.open[key]?'true':'false');
+      },onkeydown:function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();summaryEl.click();}}},
         h('div',{class:'match-info-left'},
           h('span',{class:'time',text:m.t||'--:--'}),
-          h('span',{class:'teams-mini',text:m.h + ' – ' + m.a})
-        ),
-        rightSideMini
-      );
+          h('span',{class:'teams-mini',text:m.h+' – '+m.a})),
+        h('div',{class:'match-right'},badges,lock?h('span',{class:'pill',text:'Fermé'}):null,h('span',{class:'arrow',text:'▼'})));
 
-      var h2hKeys=['1','N','2'];
-      var btns1N2=h2hKeys.map(function(v, idx){
-        return h('button',{type:'button',class:'slip'+(mine===v?' on':''),disabled:lock?true:null,
-          onclick:function(){
-            if(S.picks[i]===v)delete S.picks[i];else S.picks[i]=v;
-            save();renderView();
-          }},h('b',{text:v}),h('small',{text:labels[v]}),(m.o&&m.o[idx]!=null)?h('span',{class:'odd',text:Number(m.o[idx]).toFixed(2)}):null);
+      var btns=OPTS.map(function(v,idx){
+        return h('button',{type:'button',class:'slip'+(p.r===v?' on':''),'aria-pressed':p.r===v?'true':'false',disabled:lock?true:null,
+          onclick:function(){setPick(m,'r',v);}},
+          h('b',{text:v}),h('small',{text:labels[v]}),(m.o&&m.o[idx]!=null)?h('span',{class:'odd',text:Number(m.o[idx]).toFixed(2)}):null);
       });
 
-      var totalsBlock = null;
-      if(m.totals && typeof m.totals === 'object' && Object.keys(m.totals).length > 0) {
-        var totalsRows = [];
-        var points = Object.keys(m.totals).sort(function(a,b){return Number(a)-Number(b);});
-        
-        points.forEach(function(pt){
-          var lineData = m.totals[pt];
-          if(!lineData) return;
-          var overKey = 'OVER_' + pt;
-          var underKey = 'UNDER_' + pt;
-
-          var overBtn = h('button',{type:'button',class:'slip'+(mine===overKey?' on':''),disabled:lock?true:null,
-            onclick:function(){
-              if(S.picks[i]===overKey)delete S.picks[i];else S.picks[i]=overKey;
-              save();renderView();
-            }},h('b',{text:'+' + pt}),h('small',{text:'Plus de ' + pt}),lineData.over != null ? h('span',{class:'odd',text:Number(lineData.over).toFixed(2)}) : null);
-
-          var underBtn = h('button',{type:'button',class:'slip'+(mine===underKey?' on':''),disabled:lock?true:null,
-            onclick:function(){
-              if(S.picks[i]===underKey)delete S.picks[i];else S.picks[i]=underKey;
-              save();renderView();
-            }},h('b',{text:'-' + pt}),h('small',{text:'Moins de ' + pt}),lineData.under != null ? h('span',{class:'odd',text:Number(lineData.under).toFixed(2)}) : null);
-
-          totalsRows.push(h('div',{class:'totals-row'}, overBtn, underBtn));
-        });
-
-        if(totalsRows.length > 0) {
-          totalsBlock = h('div',{class:'totals-section'},
-            h('div',{class:'totals-label'},'Nombre de buts (Over / Under)'),
-            totalsRows
-          );
-        }
+      var totalsBlock=null;
+      var t=m.totals&&typeof m.totals==='object'?m.totals:{};
+      var pts=Object.keys(t).filter(function(k){var v=t[k];return v&&(v.over!=null||v.under!=null);}).sort(function(a,b){return Number(a)-Number(b);});
+      if(pts.length){
+        totalsBlock=h('div',{class:'totals-section'},h('div',{class:'totals-label',text:'Nombre de buts (plus / moins)'}),
+          pts.map(function(pt){
+            var d=t[pt];
+            function btn(sign,price,word){
+              var val=sign+pt;
+              if(price==null)return h('span');
+              return h('button',{type:'button',class:'slip'+(p.g===val?' on':''),'aria-pressed':p.g===val?'true':'false',disabled:lock?true:null,
+                onclick:function(){setPick(m,'g',val);}},h('b',{text:val}),h('small',{text:word+' de '+pt}),h('span',{class:'odd',text:Number(price).toFixed(2)}));
+            }
+            return h('div',{class:'totals-row'},btn('+',d.over,'Plus'),btn('-',d.under,'Moins'));
+          }));
       }
 
-      var detailsEl = h('div',{class:'match-details'},
+      var detailsEl=h('div',{class:'match-details'},
         h('div',{class:'teams-full'},h('span',{text:m.h}),h('span',{class:'vs',text:'VS'}),h('span',{text:m.a})),
-        h('div',{class:'slips'},btns1N2),
-        totalsBlock
-      );
+        h('div',{class:'slips'},btns),
+        totalsBlock,
+        m.o?null:h('p',{class:'hint nodds',text:'Pas de cote Betclic pour ce match pour l’instant.'}));
 
       if(m.c!==lastComp){items.push(h('li',{class:'grp',text:m.c||'Autres'}));lastComp=m.c;}
-      
-      var liEl = h('li',null, summaryEl, detailsEl);
+      liEl.append(summaryEl,detailsEl);
       items.push(liEl);
     });
     out.push(h('ul',{class:'list'},items));
@@ -627,25 +648,141 @@ document.addEventListener("DOMContentLoaded", function(){
     }},'Envoyer sur WhatsApp');
     var cp=h('button',{type:'button',class:'btn',onclick:async function(){
       if(!ready()){toast('Renseigne ton prénom et au moins un pronostic.');return;}
-      await copyText(message(),'Copié ! Tu peux le coller à Ahmed.');
+      var ok=await copyText(message(),'Copié ! Tu peux le coller à Ahmed.');
+      if(!ok){var pv=$('preview');var r=document.createRange();r.selectNodeContents(pv);var s=window.getSelection();s.removeAllRanges();s.addRange(r);toast('Sélectionne le texte puis copie-le.');}
     }},'Copier le texte');
-
     out.push(h('section',{class:'send',id:'send'},
       h('p',{class:'hint',id:'count'}),
+      h('p',{class:'hint',id:'combo'}),
       h('div',{class:'row'},wa,cp),
       h('pre',{class:'preview',id:'preview'})));
     return out;
   }
 
+  /* ---------- Synthèse (Ahmed) ---------- */
+  function parse(text){
+    var byName={},cur=null,otherDay=false;
+    text.split(/\r?\n/).forEach(function(line){
+      var hd=line.match(/GRILLE\s+(\d{4}-\d{2}-\d{2})\s*\|\s*(.+?)\s*$/i);
+      if(hd){
+        if(hd[1]!==DAY.date){otherDay=true;cur=null;}
+        else{cur=hd[2].trim();byName[cur]=byName[cur]||{};}
+        return;
+      }
+      if(!cur)return;
+      var mm=line.match(/^\s*\d+\)\s*(.+?)\s+[–-]\s+(.+?)\s*:\s*(?:([1N2])|(Plus|Moins) de (\d+(?:\.\d+)?) buts)\s*$/i);
+      if(!mm)return;
+      for(var q=0;q<MATCHES.length;q++){
+        var m=MATCHES[q];
+        if(m.h===mm[1]&&m.a===mm[2]){
+          var rec=byName[cur][mk(m)]||(byName[cur][mk(m)]={});
+          if(mm[3])rec.r=mm[3].toUpperCase();
+          else rec.g=(mm[4].toLowerCase()==='plus'?'+':'-')+mm[5];
+          break;
+        }
+      }
+    });
+    return {byName:byName,otherDay:otherDay};
+  }
+  function tally(parsed,m){
+    var t={'1':[],'N':[],'2':[]},g={},k=mk(m);
+    Object.keys(parsed.byName).forEach(function(n){
+      var rec=parsed.byName[n][k];
+      if(!rec)return;
+      if(rec.r)t[rec.r].push(n);
+      if(rec.g)(g[rec.g]=g[rec.g]||[]).push(n);
+    });
+    return {t:t,g:g};
+  }
+  function gKeys(g){
+    return Object.keys(g).sort(function(a,b){
+      return parseFloat(a.slice(1))-parseFloat(b.slice(1))||(a.charAt(0)<b.charAt(0)?-1:1);
+    });
+  }
+  function lead(t){
+    var tot=t['1'].length+t.N.length+t['2'].length,best=0;
+    OPTS.forEach(function(k){best=Math.max(best,t[k].length);});
+    return {tot:tot,best:best,tops:best>0?OPTS.filter(function(k){return t[k].length===best;}):[]};
+  }
+  function gText(g){return gKeys(g).map(function(k){return gLabel(k)+' ('+g[k].join(', ')+')';}).join(' | ');}
+  function withPicks(parsed){
+    return MATCHES.filter(function(m){var T=tally(parsed,m);return lead(T.t).tot>0||gKeys(T.g).length>0;});
+  }
+  function synthText(parsed){
+    var lines=['Grille du '+dayLabel(DAY.date)+' (heure de Paris)'];
+    withPicks(parsed).forEach(function(m){
+      var T=tally(parsed,m),t=T.t,L=lead(t),res;
+      if(!L.tot)res='pas de 1N2';
+      else res=(L.tops.length===1?L.tops[0]:L.tops.join('/')+' (partagé)')+' ('+L.best+'/'+L.tot+')';
+      var det=OPTS.filter(function(k){return t[k].length;}).map(function(k){return k+': '+t[k].join(', ');}).join(' | ');
+      var gt=gText(T.g);
+      lines.push((m.t?m.t+' ':'')+m.h+' – '+m.a+' → '+res+(det?'  ['+det+']':'')+(gt?'  Buts : '+gt:''));
+    });
+    return lines.join('\n');
+  }
+  function renderSynth(box){
+    var parsed=parse(S.pasted);
+    var names=Object.keys(parsed.byName);
+    var out=[];
+    if(!S.pasted.trim()){
+      out.push(h('div',{class:'empty'},h('h2',{text:'Colle les grilles reçues'}),h('p',{text:'Copie les messages WhatsApp de tes amis dans la zone ci-dessus. La synthèse se fait toute seule.'})));
+    }else if(!names.length){
+      out.push(h('div',{class:'empty'},h('h2',{text:'Aucune grille reconnue'}),h('p',{text:parsed.otherDay?'Les messages collés datent d’un autre jour que la grille affichée.':'Colle les messages tels qu’ils ont été envoyés, avec la ligne qui commence par GRILLE.'})));
+    }else{
+      if(parsed.otherDay)out.push(h('div',{class:'note',text:'Certains messages datent d’un autre jour et sont ignorés.'}));
+      var shown=withPicks(parsed),hidden=MATCHES.length-shown.length;
+      out.push(h('div',{class:'bar2'},
+        h('p',{class:'hint',text:names.length+(names.length>1?' grilles lues':' grille lue')}),
+        h('button',{type:'button',class:'btn primary small',onclick:async function(){
+          var ok=await copyText(synthText(parsed),'Synthèse copiée.');
+          if(!ok)toast('Copie impossible ici. Sélectionne le texte à la main.');
+        }},'Copier la synthèse')));
+      if(!shown.length)out.push(h('div',{class:'empty'},h('h2',{text:'Aucun pronostic reconnu'}),h('p',{text:'Les noms d’équipes doivent être ceux de la grille affichée.'})));
+      else out.push(h('ul',{class:'list'},shown.map(function(m){
+        var T=tally(parsed,m),t=T.t,L=lead(t);
+        var cols=OPTS.map(function(k){
+          var isLead=L.tops.length===1&&L.tops[0]===k;
+          return h('div',{class:'col'+(isLead?' lead':'')},
+            h('div',{class:'n'},h('b',{text:k}),h('span',{text:String(t[k].length)})),
+            h('ul',null,t[k].slice().sort().map(function(n){return h('li',{text:n});})));
+        });
+        var cons;
+        if(!L.tot)cons='Pas de pronostic 1N2';
+        else if(L.tops.length===1)cons='Majorité : '+L.tops[0]+' ('+L.best+' sur '+L.tot+')';
+        else cons='Avis partagés ('+L.tot+' pronos)';
+        var gt=gText(T.g);
+        return h('li',{class:'synth-item'},
+          h('div',{class:'synth-head'},h('span',{class:'time',text:m.t||'--:--'}),h('span',{class:'teams-mini',text:m.h+' – '+m.a})),
+          h('div',{class:'cols'},cols),
+          h('p',{class:'consensus',text:cons}),
+          gt?h('p',{class:'consensus',text:'Buts : '+gt}):null);
+      })));
+      if(hidden>0)out.push(h('p',{class:'hint',text:hidden+(hidden>1?' autres matchs sans pronostic.':' autre match sans pronostic.')}));
+    }
+    box.replaceChildren.apply(box,out);
+  }
+  function synthView(){
+    var ta=h('textarea',{id:'paste','aria-label':'Messages reçus',rows:'6',placeholder:'GRILLE '+DAY.date+' | Karim\n1) Lorient – Rennes : 1\n1) Lorient – Rennes : Plus de 2.5 buts'});
+    ta.value=S.pasted;
+    var res=h('div',{id:'synth'});
+    ta.addEventListener('input',function(){
+      S.pasted=ta.value;
+      try{localStorage.setItem('grille-collage-'+DAY.date,S.pasted);}catch(e){}
+      renderSynth(res);
+    });
+    renderSynth(res);
+    return [h('label',{for:'paste',text:'Messages reçus'}),ta,res];
+  }
+
   function renderView(){
     var v=$('view');
-    if(v) v.replaceChildren.apply(v,S.tab==='synthese'?[]:grilleView());
+    if(v)v.replaceChildren.apply(v,S.tab==='synthese'?synthView():grilleView());
     updateSend();
   }
   function renderTabs(){
     ['grille','synthese'].forEach(function(k){
       var tabEl=$('tab-'+k);
-      if(tabEl) tabEl.setAttribute('aria-selected',S.tab===k?'true':'false');
+      if(tabEl)tabEl.setAttribute('aria-selected',S.tab===k?'true':'false');
     });
   }
 
@@ -656,13 +793,21 @@ document.addEventListener("DOMContentLoaded", function(){
       renderTabs();renderView();
     });
   });
+  window.addEventListener('hashchange',function(){
+    var t=(location.hash||'').slice(1);
+    if(t==='grille'||t==='synthese'){S.tab=t;renderTabs();renderView();}
+  });
 
   load();
   if(location.hash==='#grille'||location.hash==='#synthese')S.tab=location.hash.slice(1);
-  var dayLabelEl=$('daylabel');
-  if(dayLabelEl) dayLabelEl.textContent=dayLabel(DAY.date);
+  var dl=$('daylabel');
+  if(dl)dl.textContent=dayLabel(DAY.date);
   renderTabs();
   renderView();
+  /* Met à jour les matchs fermés sans toucher à la saisie en cours. */
+  setInterval(function(){
+    if(S.tab==='grille'&&document.activeElement!==$('nick'))renderView();
+  },60000);
 });
 </script>
 </body>
