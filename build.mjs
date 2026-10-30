@@ -108,7 +108,7 @@ async function main() {
     if (budget !== null && calls >= budget) { skipped.push(lg.title); continue; }
     try {
       const data = await api(`/v4/sports/${lg.key}/odds/`, {
-        bookmakers: BOOKMAKER, markets: 'h2h', oddsFormat: 'decimal', dateFormat: 'iso',
+        bookmakers: BOOKMAKER, markets: 'h2h,totals', oddsFormat: 'decimal', dateFormat: 'iso',
         commenceTimeFrom: from, commenceTimeTo: to,
       });
       calls += 1;
