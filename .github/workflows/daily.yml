@@ -1,0 +1,46 @@
+name: Mise à jour de la grille
+
+on:
+  schedule:
+    - cron: '0 6 * * *'   # 06:00 UTC, soit 07:00 (hiver) ou 08:00 (été) à Paris
+  workflow_dispatch:       # bouton « Run workflow » pour relancer à la main
+  push:
+    branches: [main]       # relance aussi quand tu modifies les fichiers
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Générer la page
+        run: node build.mjs
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          WHATSAPP_PHONE: ${{ vars.WHATSAPP_PHONE }}
+          DAILY_BUDGET: ${{ vars.DAILY_BUDGET }}
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
