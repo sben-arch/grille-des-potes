@@ -1,664 +1,152 @@
-<!DOCTYPE html>
-<html lang="fr" data-theme="dark">
-<head>
-<meta charset="UTF-8">
-<title>La Grille des Potes</title>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;800;900&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
-<style>
-:root {
-  --bg: #0b0f19;
-  --card: #131b2e;
-  --card-hover: #1a2540;
-  --border: #22304f;
-  --text: #ffffff;
-  --text-muted: #94a3b8;
-  --primary: #10b981;
-  --primary-glow: rgba(16, 185, 129, 0.4);
-  --primary-text: #042f1c;
+// Génère dist/index.html : les matchs de foot du jour (heure de Paris) avec les cotes Betclic.
+// Lancé chaque matin par GitHub Actions. Lit la clé dans la variable d'environnement ODDS_API_KEY.
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+
+const KEY = process.env.ODDS_API_KEY;
+const BASE = process.env.ODDS_API_BASE || 'https://api.the-odds-api.com';
+const BOOKMAKER = 'betclic_fr';
+const RESERVE = Number(process.env.RESERVE_CREDITS || 25); // crédits laissés de côté
+const DAILY_BUDGET = process.env.DAILY_BUDGET ? Number(process.env.DAILY_BUDGET) : null; // appels de cotes max par jour
+const PHONE = (process.env.WHATSAPP_PHONE || '').replace(/\D/g, '');
+const TZ = 'Europe/Paris';
+
+if (!KEY) {
+  console.error('ODDS_API_KEY est absente. Ajoute-la dans Settings > Secrets and variables > Actions.');
+  process.exit(1);
 }
 
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  background-color: var(--bg);
-  color: var(--text);
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  padding: 24px 16px 100px;
+// Championnats les plus suivis d'abord. Les autres suivent par ordre alphabétique.
+const PRIORITY = [
+  'soccer_france_ligue_one', 'soccer_france_ligue_two', 'soccer_epl', 'soccer_spain_la_liga',
+  'soccer_italy_serie_a', 'soccer_germany_bundesliga', 'soccer_uefa_champs_league',
+  'soccer_uefa_europa_league', 'soccer_uefa_europa_conf_league', 'soccer_france_coupe_de_france',
+  'soccer_efl_champ', 'soccer_netherlands_eredivisie', 'soccer_portugal_primeira_liga',
+  'soccer_belgium_first_div', 'soccer_turkey_super_league', 'soccer_spain_segunda_division',
+  'soccer_italy_serie_b', 'soccer_germany_bundesliga2',
+];
+
+function parisParts(date) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).formatToParts(date);
+  const g = (t) => parts.find((p) => p.type === t).value;
+  return { day: `${g('year')}-${g('month')}-${g('day')}`, hm: `${g('hour')}:${g('minute')}` };
 }
-
-.wrap { max-width: 600px; margin: 0 auto; }
-
-header {
-  text-align: center;
-  margin-bottom: 24px;
+function addDays(day, n) {
+  const d = new Date(`${day}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
 }
-
-.kicker {
-  display: inline-block;
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  color: #34d399;
-  background: rgba(16, 185, 129, 0.15);
-  padding: 6px 14px;
-  border-radius: 20px;
-  margin-bottom: 10px;
-}
-
-h1 {
-  font-family: 'Outfit', sans-serif;
-  font-size: 36px;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: -0.02em;
-  margin: 0 0 4px;
-  color: #fff;
-}
-
-.daylabel {
-  font-size: 15px;
-  color: var(--text-muted);
-  font-weight: 600;
-  text-transform: capitalize;
-  margin: 0;
-}
-
-.tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  background: var(--card);
-  padding: 6px;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  margin-bottom: 20px;
-}
-
-.tab {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  padding: 12px;
-  font-family: 'Outfit', sans-serif;
-  font-weight: 800;
-  font-size: 14px;
-  text-transform: uppercase;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.tab[aria-selected="true"] {
-  background: var(--primary);
-  color: var(--primary-text);
-  box-shadow: 0 0 20px var(--primary-glow);
-}
-
-.me {
-  background: var(--card);
-  border: 1px solid var(--border);
-  padding: 16px;
-  border-radius: 14px;
-  margin-bottom: 20px;
-}
-
-label {
-  display: block;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-muted);
-  margin-bottom: 6px;
-}
-
-input, textarea {
-  width: 100%;
-  background: #070a12;
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 14px;
-  border-radius: 10px;
-  font-family: inherit;
-  font-size: 15px;
-  outline: none;
-}
-input:focus, textarea:focus { border-color: var(--primary); }
-
-.note {
-  background: rgba(59, 130, 246, 0.15);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  color: #93c5fd;
-  padding: 12px;
-  border-radius: 12px;
-  font-size: 13px;
-  margin-bottom: 16px;
-  text-align: center;
-  font-weight: 600;
-}
-
-.list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.list > li {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 16px;
-}
-
-.list > li.grp {
-  background: transparent;
-  border: none;
-  padding: 4px 0;
-  font-family: 'Outfit', sans-serif;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  color: var(--primary);
-  text-transform: uppercase;
-}
-
-.mhead {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.time {
-  font-size: 12px;
-  font-weight: 700;
-  background: #070a12;
-  padding: 4px 8px;
-  border-radius: 6px;
-  color: var(--text-muted);
-}
-
-.comp {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.pill {
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  padding: 4px 8px;
-  border-radius: 6px;
-  background: #070a12;
-  color: var(--text-muted);
-}
-.pill.open {
-  background: rgba(16, 185, 129, 0.2);
-  color: #34d399;
-}
-
-.teams {
-  font-family: 'Outfit', sans-serif;
-  font-size: 18px;
-  font-weight: 800;
-  text-align: center;
-  margin: 12px 0 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-.teams span:not(.vs) { flex: 1; }
-.teams span:first-child { text-align: right; }
-.teams span:last-child { text-align: left; }
-.teams .vs {
-  font-size: 10px;
-  color: var(--text-muted);
-  background: #070a12;
-  width: 22px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-}
-
-.slips {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-
-.slip {
-  background: #070a12;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px 4px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  cursor: pointer;
-  color: var(--text);
-  transition: all 0.15s;
-}
-
-.slip b {
-  font-family: 'Outfit', sans-serif;
-  font-size: 22px;
-  font-weight: 900;
-}
-
-.slip small {
-  font-size: 10px;
-  color: var(--text-muted);
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.slip .odd {
-  font-size: 11px;
-  font-weight: 700;
-  color: #34d399;
-  margin-top: 2px;
-}
-
-.slip.on {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: var(--primary-text);
-  box-shadow: 0 0 15px var(--primary-glow);
-}
-.slip.on small, .slip.on .odd {
-  color: var(--primary-text);
-  font-weight: 800;
-}
-
-.send {
-  margin-top: 20px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  padding: 16px;
-  border-radius: 14px;
-  display: grid;
-  gap: 12px;
-}
-
-.row { display: flex; gap: 8px; }
-
-.btn {
-  flex: 1;
-  min-height: 48px;
-  border-radius: 10px;
-  font-family: 'Outfit', sans-serif;
-  font-weight: 800;
-  font-size: 13px;
-  text-transform: uppercase;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  border: 1px solid var(--border);
-  background: #22304f;
-  color: #fff;
-}
-
-.btn.primary {
-  background: var(--primary);
-  color: var(--primary-text);
-  border-color: var(--primary);
-  box-shadow: 0 4px 15px var(--primary-glow);
-}
-
-.preview {
-  background: #070a12;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px;
-  font-size: 12px;
-  color: var(--text-muted);
-  white-space: pre-wrap;
-  margin: 0;
-}
-
-.hint { font-size: 12px; font-weight: 600; color: var(--text-muted); margin: 0; }
-
-.bar2 {
-  background: var(--card);
-  border: 1px solid var(--border);
-  padding: 12px;
-  border-radius: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-.bar2 p { margin: 0; font-weight: 700; font-size: 13px; color: var(--text-muted); }
-
-.cols {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-  margin-top: 10px;
-}
-
-.col {
-  background: #070a12;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px;
-}
-.col.lead {
-  border-color: var(--primary);
-  background: rgba(16, 185, 129, 0.05);
-}
-
-.col .n { display: flex; justify-content: space-between; align-items: baseline; }
-.col .n b { font-family: 'Outfit'; font-size: 16px; font-weight: 900; }
-.col .n span { font-size: 11px; color: var(--text-muted); }
-.col ul { list-style: none; padding: 0; margin: 4px 0 0; font-size: 11px; }
-
-.consensus {
-  margin-top: 8px;
-  text-align: center;
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  background: #070a12;
-  padding: 6px;
-  border-radius: 6px;
-}
-
-.empty {
-  text-align: center;
-  padding: 30px;
-  border: 2px dashed var(--border);
-  border-radius: 14px;
-  color: var(--text-muted);
-}
-.empty h2 { font-family: 'Outfit'; color: #fff; font-size: 18px; margin: 0 0 4px; }
-
-#toast {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #fff;
-  color: #000;
-  padding: 10px 18px;
-  border-radius: 20px;
-  font-weight: 800;
-  font-size: 13px;
-  z-index: 100;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-}
-</style>
-</head>
-<body>
-
-<div class="wrap">
-  <header>
-    <div class="kicker">Pronos entre potes</div>
-    <h1>La Grille du Jour</h1>
-    <p class="daylabel" id="daylabel"></p>
-  </header>
-
-  <nav class="tabs" role="tablist">
-    <button class="tab" role="tab" type="button" id="tab-grille" data-tab="grille">Ma Grille</button>
-    <button class="tab" role="tab" type="button" id="tab-synthese" data-tab="synthese">Synthèse (Ahmed)</button>
-  </nav>
-
-  <main id="view"></main>
-  <div id="toast" role="status" hidden></div>
-</div>
-
-<script>
-(function(){
-  var TZ='Europe/Paris';
-  var OPTS=['1','N','2'];
-  var DAY=__DAY_JSON__;
-  var PHONE='__PHONE__';
-
-  function $(id){return document.getElementById(id);}
-  function h(tag,attrs){
-    var e=document.createElement(tag);
-    attrs=attrs||{};
-    for(var k in attrs){
-      var v=attrs[k];
-      if(v==null||v===false)continue;
-      if(k==='class')e.className=v;
-      else if(k==='text')e.textContent=v;
-      else if(k.slice(0,2)==='on')e.addEventListener(k.slice(2),v);
-      else e.setAttribute(k,v===true?'':v);
-    }
-    for(var i=2;i<arguments.length;i++){
-      var c=arguments[i];
-      var list=Array.isArray(c)?c:[c];
-      for(var j=0;j<list.length;j++){
-        var x=list[j];
-        if(x==null||x===false)continue;
-        e.append(x.nodeType?x:document.createTextNode(String(x)));
-      }
-    }
-    return e;
+function parisMidnightUTC(day) {
+  const [y, m, d] = day.split('-').map(Number);
+  for (const off of [1, 2, 0, 3]) {
+    const t = new Date(Date.UTC(y, m - 1, d) - off * 3600e3);
+    const p = parisParts(t);
+    if (p.day === day && p.hm === '00:00') return t;
   }
-  function parisNow(){
-    var parts=new Intl.DateTimeFormat('en-CA',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date());
-    function g(t){for(var i=0;i<parts.length;i++){if(parts[i].type===t)return parts[i].value;}return '';}
-    return {day:g('year')+'-'+g('month')+'-'+g('day'),hm:g('hour')+':'+g('minute')};
-  }
-  function dayLabel(d){return new Date(d+'T12:00:00Z').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'});}
+  throw new Error('Fuseau horaire de Paris introuvable');
+}
+const iso = (d) => d.toISOString().replace(/\.\d{3}Z$/, 'Z');
 
-  var S={tab:'grille',name:'',picks:{},pasted:''};
-  var toastTimer=null;
-  function toast(msg){var t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.hidden=true;},4000);}
+let remaining = null;
+let lastCost = 1;
 
-  function load(){
-    try{
-      S.name=localStorage.getItem('grille-nom')||'';
-      var r=localStorage.getItem('grille-'+DAY.date);
-      if(r){var o=JSON.parse(r);S.picks=o&&o.picks?o.picks:{};}
-      S.pasted=localStorage.getItem('grille-collage-'+DAY.date)||'';
-    }catch(e){}
+async function api(path, params = {}) {
+  const url = new URL(path, BASE);
+  url.searchParams.set('apiKey', KEY);
+  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+  const res = await fetch(url);
+  const rem = res.headers.get('x-requests-remaining');
+  if (rem !== null && rem !== '') remaining = Number(rem);
+  const cost = res.headers.get('x-requests-last');
+  if (cost !== null && cost !== '') lastCost = Number(cost);
+  if (!res.ok) {
+    const body = (await res.text()).slice(0, 200);
+    throw new Error(`${res.status} sur ${path} : ${body}`);
   }
-  function save(){
-    try{
-      localStorage.setItem('grille-nom',S.name);
-      localStorage.setItem('grille-'+DAY.date,JSON.stringify({picks:S.picks}));
-    }catch(e){}
-  }
+  return res.json();
+}
 
-  function locked(m){
-    var n=parisNow();
-    if(DAY.date<n.day)return true;
-    if(DAY.date===n.day&&m.t&&m.t<=n.hm)return true;
-    return false;
-  }
-  function head(m,hideComp){
-    return h('div',{class:'mhead'},
-      h('span',{class:'time',text:m.t||'--:--'}),
-      h('span',{class:'comp',text:hideComp?'':(m.c||'')}),
-      locked(m)?h('span',{class:'pill',text:'Fermé'}):h('span',{class:'pill open',text:'Ouvert'}));
-  }
-  function teams(m){
-    return h('div',{class:'teams'},h('span',{text:m.h}),h('span',{class:'vs',text:'VS'}),h('span',{text:m.a}));
-  }
+async function main() {
+  const now = new Date();
+  const today = parisParts(now).day;
+  const from = iso(parisMidnightUTC(today));
+  const to = iso(parisMidnightUTC(addDays(today, 1)));
 
-  function message(){
-    var lines=['GRILLE '+DAY.date+' | '+(S.name||'').trim()];
-    DAY.matches.forEach(function(m,i){
-      var p=S.picks[i];
-      if(OPTS.indexOf(p)>=0)lines.push((i+1)+') '+m.h+' – '+m.a+' : '+p);
+  // 1. Liste des championnats de foot actifs (ne consomme pas de crédits).
+  const sports = await api('/v4/sports/');
+  const leagues = sports
+    .filter((s) => s.group === 'Soccer' && s.active && !s.has_outrights)
+    .sort((a, b) => {
+      const ia = PRIORITY.indexOf(a.key), ib = PRIORITY.indexOf(b.key);
+      return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib) || a.title.localeCompare(b.title);
     });
-    return lines.join('\n');
-  }
-  function nbPicks(){var n=0;DAY.matches.forEach(function(m,i){if(OPTS.indexOf(S.picks[i])>=0)n++;});return n;}
-  function ready(){return nbPicks()>0&&(S.name||'').trim().length>0;}
+  console.log(`${leagues.length} championnats de foot actifs.`);
 
-  async function copyText(txt,okMsg){
-    try{await navigator.clipboard.writeText(txt);toast(okMsg);return true;}catch(e){return false;}
-  }
-
-  function updateSend(){
-    var box=$('send');
-    if(!box)return;
-    var msg=message();
-    $('preview').textContent=ready()?msg:'Entre ton prénom et coche au moins un prono.';
-    var a=$('wa');
-    a.href='https://wa.me/'+PHONE+'?text='+encodeURIComponent(msg);
-    a.setAttribute('aria-disabled',ready()?'false':'true');
-    $('count').textContent=nbPicks()+' / '+DAY.matches.length+' pronos sélectionnés';
-  }
-
-  function grilleView(){
-    var out=[];
-    if(DAY.updated)out.push(h('div',{class:'note',text:'Cotes Betclic relevées à '+DAY.updated+' (Paris).'}));
-    var nick=h('input',{id:'nick',maxlength:'24',placeholder:'Ex. Karim'});
-    nick.value=S.name;
-    nick.addEventListener('input',function(){S.name=nick.value;save();updateSend();});
-    out.push(h('div',{class:'me'},h('label',{for:'nick',text:'Ton prénom'}),nick));
-
-    if(!DAY.matches.length){out.push(h('div',{class:'empty'},h('h2',{text:'Aucun match'}),h('p',{text:'Reviens plus tard pour la nouvelle grille.'})));return out;}
-
-    var items=[];var lastComp=null;
-    DAY.matches.forEach(function(m,i){
-      var lock=locked(m),mine=S.picks[i];
-      var labels={'1':m.h,'N':'Nul','2':m.a};
-      var btns=OPTS.map(function(v){
-        return h('button',{type:'button',class:'slip'+(mine===v?' on':''),disabled:lock?true:null,
-          onclick:function(){
-            if(S.picks[i]===v)delete S.picks[i];else S.picks[i]=v;
-            save();renderView();
-          }},h('b',{text:v}),h('small',{text:labels[v]}),(m.o&&m.o[OPTS.indexOf(v)]!=null)?h('span',{class:'odd',text:Number(m.o[OPTS.indexOf(v)]).toFixed(2)}):null);
+  // 2. Quels championnats ont des matchs aujourd'hui ? (liste des matchs sans cotes)
+  const withGames = [];
+  for (const lg of leagues) {
+    try {
+      const events = await api(`/v4/sports/${lg.key}/events`, {
+        commenceTimeFrom: from, commenceTimeTo: to, dateFormat: 'iso',
       });
-      if(m.c!==lastComp){items.push(h('li',{class:'grp',text:m.c||'Autres'}));lastComp=m.c;}
-      items.push(h('li',null,head(m,true),teams(m),h('div',{class:'slips'},btns)));
-    });
-    out.push(h('ul',{class:'list'},items));
-
-    var wa=h('a',{id:'wa',class:'btn primary',href:'#',target:'_blank',rel:'noopener',onclick:function(e){
-      if(!ready()){e.preventDefault();toast('Renseigne ton prénom et au moins un pronostic.');}
-    }},'Envoyer sur WhatsApp');
-    var cp=h('button',{type:'button',class:'btn',onclick:async function(){
-      if(!ready()){toast('Renseigne ton prénom et au moins un pronostic.');return;}
-      await copyText(message(),'Copié ! Tu peux le coller à Ahmed.');
-    }},'Copier le texte');
-
-    out.push(h('section',{class:'send',id:'send'},
-      h('p',{class:'hint',id:'count'}),
-      h('div',{class:'row'},wa,cp),
-      h('pre',{class:'preview',id:'preview'})));
-    return out;
-  }
-
-  function parse(text){
-    var byName={},cur=null,otherDay=false,seen=0;
-    text.split(/\r?\n/).forEach(function(line){
-      var hd=line.match(/GRILLE\s+(\d{4}-\d{2}-\d{2})\s*\|\s*(.+?)\s*$/i);
-      if(hd){cur=hd[2].trim();if(hd[1]!==DAY.date){otherDay=true;cur=null;}else{byName[cur]=byName[cur]||{};seen++;}return;}
-      if(!cur)return;
-      var mm=line.match(/^\s*\d+\)\s*(.+?)\s+[–-]\s+(.+?)\s*:\s*([1N2])\s*$/i);
-      if(mm){for(var q=0;q<DAY.matches.length;q++){if(DAY.matches[q].h===mm[1]&&DAY.matches[q].a===mm[2]){byName[cur][q]=mm[3].toUpperCase();break;}}}
-    });
-    return {byName:byName,otherDay:otherDay,seen:seen};
-  }
-  function tally(parsed,i){
-    var t={'1':[],'N':[],'2':[]};
-    Object.keys(parsed.byName).forEach(function(n){var v=parsed.byName[n][i];if(OPTS.indexOf(v)>=0)t[v].push(n);});
-    return t;
-  }
-  function lead(t){
-    var tot=t['1'].length+t.N.length+t['2'].length,best=0;
-    OPTS.forEach(function(k){best=Math.max(best,t[k].length);});
-    return {tot:tot,best:best,tops:best>0?OPTS.filter(function(k){return t[k].length===best;}):[]};
-  }
-  function synthText(parsed){
-    var lines=['Grille du '+dayLabel(DAY.date)];
-    DAY.matches.forEach(function(m,i){
-      var t=tally(parsed,i),L=lead(t),res;
-      if(!L.tot)res='aucun prono';
-      else res=(L.tops.length===1?L.tops[0]:L.tops.join('/')+' (partagé)')+' ('+L.best+'/'+L.tot+')';
-      var det=OPTS.filter(function(k){return t[k].length;}).map(function(k){return k+': '+t[k].join(', ');}).join(' | ');
-      lines.push((m.t?m.t+' ':'')+m.h+' – '+m.a+' → '+res+(det?'  ['+det+']':''));
-    });
-    return lines.join('\n');
-  }
-  function renderSynth(box){
-    var parsed=parse(S.pasted);
-    var names=Object.keys(parsed.byName);
-    var out=[];
-    if(!S.pasted.trim()){
-      out.push(h('div',{class:'empty'},h('h2',{text:'Colle les messages reçus'}),h('p',{text:'Copie-colle les messages WhatsApp des potes ici.'})));
-    }else if(!names.length){
-      out.push(h('div',{class:'empty'},h('h2',{text:'Aucune grille reconnue'}),h('p',{text:'Vérifie que les messages commencent bien par GRILLE.'})));
-    }else{
-      out.push(h('div',{class:'bar2'},
-        h('p',{text:names.length+(names.length>1?' grilles lues':' grille lue')}),
-        h('button',{type:'button',class:'btn primary',onclick:async function(){
-          await copyText(synthText(parsed),'Synthèse copiée !');
-        }},'Copier la synthèse')));
-      out.push(h('ul',{class:'list'},DAY.matches.map(function(m,i){
-        var t=tally(parsed,i),L=lead(t);
-        var cols=OPTS.map(function(k){
-          var isLead=L.tops.length===1&&L.tops[0]===k;
-          return h('div',{class:'col'+(isLead?' lead':'')},
-            h('div',{class:'n'},h('b',{text:k}),h('span',{text:String(t[k].length)})),
-            h('ul',null,t[k].slice().sort().map(function(n){return h('li',{text:n});})));
-        });
-        var cons=L.tot? (L.tops.length===1?'Majorité : '+L.tops[0]+' ('+L.best+'/'+L.tot+')':'Avis partagés') : 'Aucun prono';
-        return h('li',null,head(m),teams(m),h('div',{class:'cols'},cols),h('p',{class:'consensus',text:cons}));
-      })));
+      if (events.length) withGames.push({ lg, count: events.length });
+    } catch (e) {
+      console.warn(`Matchs ignorés pour ${lg.key} : ${e.message}`);
     }
-    box.replaceChildren.apply(box,out);
   }
-  function synthView(){
-    var ta=h('textarea',{id:'paste',placeholder:'Colle les messages WhatsApp ici...'});
-    ta.value=S.pasted;
-    var res=h('div');
-    ta.addEventListener('input',function(){
-      S.pasted=ta.value;
-      try{localStorage.setItem('grille-collage-'+DAY.date,S.pasted);}catch(e){}
-      renderSynth(res);
-    });
-    renderSynth(res);
-    return [h('label',{for:'paste',text:'Messages reçus'}),ta,res];
-  }
+  console.log(`${withGames.length} championnats ont des matchs aujourd'hui.`);
 
-  function renderView(){
-    var v=$('view');
-    v.replaceChildren.apply(v,S.tab==='synthese'?synthView():grilleView());
-    updateSend();
+  // 3. Cotes Betclic, championnat par championnat, dans la limite du quota.
+  const matches = [];
+  const skipped = [];
+  let budget = DAILY_BUDGET;
+  let calls = 0;
+  for (const { lg } of withGames) {
+    if (remaining !== null && remaining <= RESERVE) { skipped.push(lg.title); continue; }
+    if (budget !== null && calls >= budget) { skipped.push(lg.title); continue; }
+    try {
+      const data = await api(`/v4/sports/${lg.key}/odds/`, {
+        bookmakers: BOOKMAKER, markets: 'h2h', oddsFormat: 'decimal', dateFormat: 'iso',
+        commenceTimeFrom: from, commenceTimeTo: to,
+      });
+      calls += 1;
+      if (budget === null && remaining !== null) {
+        // Répartit les crédits restants sur les jours du mois qui restent.
+        const [y, m, d] = today.split('-').map(Number);
+        const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
+        const daysLeft = daysInMonth - d + 1;
+        budget = Math.max(3, Math.floor((remaining + lastCost) / daysLeft));
+        console.log(`Budget du jour : ${budget} appels (${remaining} crédits restants).`);
+      }
+      const rows = [];
+      for (const ev of data) {
+        const bk = (ev.bookmakers || []).find((b) => b.key === BOOKMAKER);
+        const mk = bk && (bk.markets || []).find((x) => x.key === 'h2h');
+        if (!mk) continue;
+        const price = (name) => { const o = mk.outcomes.find((x) => x.name === name); return o ? o.price : null; };
+        const o = [price(ev.home_team), price('Draw'), price(ev.away_team)];
+        if (o.some((x) => x == null)) continue;
+        rows.push({ ts: ev.commence_time, t: parisParts(new Date(ev.commence_time)).hm, c: lg.title, h: ev.home_team, a: ev.away_team, o });
+      }
+      rows.sort((x, y) => x.ts.localeCompare(y.ts));
+      for (const r of rows) { delete r.ts; matches.push(r); }
+    } catch (e) {
+      console.warn(`Cotes ignorées pour ${lg.key} : ${e.message}`);
+    }
   }
-  function renderTabs(){
-    ['grille','synthese'].forEach(function(k){$('tab-'+k).setAttribute('aria-selected',S.tab===k?'true':'false');});
-  }
+  if (skipped.length) console.warn(`Quota atteint, non couverts : ${skipped.join(', ')}`);
+  console.log(`${matches.length} matchs avec cotes Betclic. Crédits restants : ${remaining ?? 'inconnu'}.`);
 
-  document.querySelectorAll('.tab').forEach(function(b){
-    b.addEventListener('click',function(){
-      S.tab=b.getAttribute('data-tab');
-      try{location.hash=S.tab;}catch(e){}
-      renderTabs();renderView();
-    });
-  });
+  // 4. Page finale.
+  const day = { date: today, updated: parisParts(new Date()).hm, matches };
+  const json = JSON.stringify(day).replace(/</g, '\\u003c');
+  const tpl = await readFile(new URL('./template.html', import.meta.url), 'utf8');
+  const html = tpl.replace('__DAY_JSON__', () => json).replace('__PHONE__', PHONE);
+  await mkdir(new URL('./dist/', import.meta.url), { recursive: true });
+  await writeFile(new URL('./dist/index.html', import.meta.url), html);
+  console.log('dist/index.html écrit.');
+}
 
-  load();
-  if(location.hash==='#grille'||location.hash==='#synthese')S.tab=location.hash.slice(1);
-  $('daylabel').textContent=dayLabel(DAY.date);
-  renderTabs();
-  renderView();
-})();
-</script>
-</body>
-</html>
+main().catch((e) => { console.error(e.message); process.exit(1); });
